@@ -15,8 +15,11 @@ import {
    Center,
    NativeBaseProvider,
    Icon,
+   Alert,
+   HStack,
 } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
+import { NavigationEvents } from 'react-navigation';
 
 yup.addMethod(yup.array, 'unique', function (message, mapper = (a) => a) {
    return this.test('unique', message, function (list) {
@@ -38,14 +41,14 @@ const loginValidationSchema = yup.object().shape({
       .string()
       .min(8, ({ min }) => `Password must be at least ${min} characters`)
       .required('Password is required'),
-   passwordConfirmation: yup
+   passwordConfirm: yup
       .string()
       .required('Confirm password is required')
       .oneOf([yup.ref('password'), null], 'Passwords must match'),
 });
 
 const SignupScreen = ({ navigation }) => {
-   const { signup } = useContext(Context);
+   const { signup, state, clearErrMessage } = useContext(Context);
 
    return (
       <ScrollView
@@ -53,13 +56,14 @@ const SignupScreen = ({ navigation }) => {
          style={{ width: '100%' }}
       >
          <View style={styles.container}>
+            <NavigationEvents onWillBlur={clearErrMessage} />
             <Formik
                validationSchema={loginValidationSchema}
                initialValues={{
                   fullname: '',
                   email: '',
                   password: '',
-                  passwordConfirmation: '',
+                  passwordConfirm: '',
                }}
                onSubmit={signup}
             >
@@ -201,22 +205,48 @@ const SignupScreen = ({ navigation }) => {
                                     }
                                     padding={{ base: '2', md: '5' }}
                                     type="password"
-                                    defaultValue={values.passwordConfirmation}
+                                    defaultValue={values.passwordConfirm}
                                     placeholder="Confirm password"
                                     onChangeText={handleChange(
-                                       'passwordConfirmation'
+                                       'passwordConfirm'
                                     )}
-                                    onBlur={handleBlur('passwordConfirmation')}
+                                    onBlur={handleBlur('passwordConfirm')}
                                     secureTextEntry
                                  />
-                                 {errors.passwordConfirmation && (
+                                 {errors.passwordConfirm && (
                                     <FormControl.HelperText>
                                        <Text color="red.500">
-                                          {errors.passwordConfirmation}
+                                          {errors.passwordConfirm}
                                        </Text>
                                     </FormControl.HelperText>
                                  )}
+                                 {state.errMessage && (
+                                    <Alert w="100%" status="error" mt="4">
+                                       <VStack
+                                          space={2}
+                                          flexShrink={1}
+                                          w="100%"
+                                       >
+                                          <HStack
+                                             flexShrink={1}
+                                             space={2}
+                                             justifyContent="space-between"
+                                          >
+                                             <HStack space={2} flexShrink={1}>
+                                                <Alert.Icon mt="1" />
+                                                <Text
+                                                   fontSize="md"
+                                                   color="coolGray.800"
+                                                >
+                                                   {state.errMessage}
+                                                </Text>
+                                             </HStack>
+                                          </HStack>
+                                       </VStack>
+                                    </Alert>
+                                 )}
                               </FormControl>
+
                               <Button
                                  mt="2"
                                  colorScheme="indigo"

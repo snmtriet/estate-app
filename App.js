@@ -11,8 +11,7 @@ import EstateListScreen from './src/screens/EstateListScreen';
 import { Provider as AuthProvider } from './src/context/AuthContext';
 import { setNavigator } from './src/navigationRef';
 import ResolveAuthScreen from './src/screens/ResolveAuthScreen';
-import { Ionicons } from '@expo/vector-icons';
-import { Feather } from '@expo/vector-icons';
+import { Ionicons, AntDesign, Feather } from '@expo/vector-icons';
 
 const switchNavigator = createSwitchNavigator({
    ResolveAuth: ResolveAuthScreen,
@@ -21,37 +20,37 @@ const switchNavigator = createSwitchNavigator({
       Signup: SignupScreen,
    }),
    mainFlow: createBottomTabNavigator({
-      Create: {
-         screen: EstateCreateScreen,
-         navigationOptions: {
-            tabBarLabel: 'Create Estate',
-            tabBarOptions: {
-               activeTintColor: '#0891b2',
-            },
-            tabBarIcon: (tabInfo) => {
-               return (
-                  <Feather
-                     name="plus-circle"
-                     size={24}
-                     color={tabInfo.focused ? '#0891b2' : '#8e8e93'}
-                  />
-               );
-            },
-         },
-      },
       List: {
          screen: EstateListScreen,
          navigationOptions: {
             tabBarLabel: 'List Estate',
             tabBarOptions: {
-               activeTintColor: '#0891b2',
+               activeTintColor: '#18181b',
             },
             tabBarIcon: (tabInfo) => {
                return (
                   <Ionicons
                      name="md-home"
                      size={24}
-                     color={tabInfo.focused ? '#0891b2' : '#8e8e93'}
+                     color={tabInfo.focused ? '#18181b' : '#8e8e93'}
+                  />
+               );
+            },
+         },
+      },
+      Create: {
+         screen: EstateCreateScreen,
+         navigationOptions: {
+            tabBarLabel: 'Quét QR',
+            tabBarOptions: {
+               activeTintColor: '#18181b',
+            },
+            tabBarIcon: (tabInfo) => {
+               return (
+                  <AntDesign
+                     name="qrcode"
+                     size={24}
+                     color={tabInfo.focused ? '#18181b' : '#8e8e93'}
                   />
                );
             },
@@ -62,14 +61,14 @@ const switchNavigator = createSwitchNavigator({
          navigationOptions: {
             tabBarLabel: 'Account',
             tabBarOptions: {
-               activeTintColor: '#0891b2',
+               activeTintColor: '#18181b',
             },
             tabBarIcon: (tabInfo) => {
                return (
                   <Ionicons
                      name="md-person-circle-outline"
                      size={24}
-                     color={tabInfo.focused ? '#0891b2' : '#8e8e93'}
+                     color={tabInfo.focused ? '#18181b' : '#8e8e93'}
                   />
                );
             },

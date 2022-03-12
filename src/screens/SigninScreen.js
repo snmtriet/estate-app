@@ -13,12 +13,14 @@ import {
    Input,
    Link,
    Button,
-   HStack,
    Center,
    NativeBaseProvider,
    Icon,
+   Alert,
+   HStack,
 } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
+import { NavigationEvents } from 'react-navigation';
 
 const loginValidationSchema = yup.object().shape({
    email: yup
@@ -32,10 +34,11 @@ const loginValidationSchema = yup.object().shape({
 });
 
 const SigninScreen = ({ navigation }) => {
-   const { signin, state } = useContext(Context);
+   const { signin, state, clearErrMessage } = useContext(Context);
 
    return (
       <View style={styles.container}>
+         <NavigationEvents onWillBlur={clearErrMessage} />
          <Formik
             validationSchema={loginValidationSchema}
             initialValues={{ email: '', password: '' }}
@@ -135,11 +138,25 @@ const SigninScreen = ({ navigation }) => {
                                  </FormControl.HelperText>
                               )}
                               {state.errMessage && (
-                                 <FormControl.HelperText>
-                                    <Text color="red.500">
-                                       {state.errMessage}
-                                    </Text>
-                                 </FormControl.HelperText>
+                                 <Alert w="100%" status="error" mt="4">
+                                    <VStack space={2} flexShrink={1} w="100%">
+                                       <HStack
+                                          flexShrink={1}
+                                          space={2}
+                                          justifyContent="space-between"
+                                       >
+                                          <HStack space={2} flexShrink={1}>
+                                             <Alert.Icon mt="1" />
+                                             <Text
+                                                fontSize="md"
+                                                color="coolGray.800"
+                                             >
+                                                {state.errMessage}
+                                             </Text>
+                                          </HStack>
+                                       </HStack>
+                                    </VStack>
+                                 </Alert>
                               )}
                               <Link
                                  _text={{
