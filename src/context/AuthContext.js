@@ -6,9 +6,19 @@ import { navigate } from '../navigationRef';
 const authReducer = (state, action) => {
    switch (action.type) {
       case 'add_error':
-         return { ...state, successMessage: '', errMessage: action.payload };
-      case 'add_success':
-         return { ...state, errMessage: '', successMessage: action.payload };
+         return { ...state, errMessage: action.payload };
+      case 'add_error_changepassword':
+         return {
+            ...state,
+            successMessageChangePassword: '',
+            errMessageChangePassword: action.payload,
+         };
+      case 'add_success_changepassword':
+         return {
+            ...state,
+            errMessageChangePassword: '',
+            successMessageChangePassword: action.payload,
+         };
       case 'signin':
          return {
             errMessage: '',
@@ -20,7 +30,7 @@ const authReducer = (state, action) => {
             token: action.payload,
          };
       case 'clear_err_message':
-         return { ...state, errMessage: '' };
+         return { ...state, errMessage: '', successMessageChangePassword: '' };
       case 'signout':
          return { token: null, errMessage: '' };
       default:
@@ -34,7 +44,7 @@ const tryLocalSignin = (dispatch) => async () => {
       dispatch({ type: 'signin', payload: token });
       navigate('mainFlow');
    } else {
-      navigate('Signup');
+      navigate('loginFlow');
    }
 };
 
@@ -52,7 +62,6 @@ const signup =
             password,
             passwordConfirm,
          });
-         console.log(response.data);
          await AsyncStorage.setItem('token', response.data.token);
          await AsyncStorage.setItem('currentUser', response.data.data.user._id);
          await AsyncStorage.setItem(
@@ -100,6 +109,7 @@ const signin =
 const signout = (dispatch) => async () => {
    await AsyncStorage.removeItem('token');
    await AsyncStorage.removeItem('savedIds');
+   await AsyncStorage.removeItem('currentUser');
    dispatch({ type: 'signout' });
    navigate('loginFlow');
 };
@@ -110,7 +120,6 @@ const onlyUnique = (value, index, self) => {
 };
 
 const exportToExcel = (dispatch) => async () => {
-   const user = await AsyncStorage.getItem('currentUser');
    const token = await AsyncStorage.getItem('token');
    const arrIds = await AsyncStorage.getItem('savedIds');
    if (arrIds) {
@@ -179,6 +188,49 @@ const updateEstate =
       }
    };
 
+const changePassword =
+   (dispatch) =>
+   async ({ currentPassword, newPassword, newPasswordConfirm }) => {
+      const token = await AsyncStorage.getItem('token');
+      try {
+         const response = await estateApi.patch(
+            '/users/updateMyPassword',
+            {
+               passwordCurrent: currentPassword,
+               password: newPassword,
+               passwordConfirm: newPasswordConfirm,
+            },
+            {
+               headers: {
+                  Authorization: `Bearer ${token}`,
+               },
+            }
+         );
+         dispatch({
+            type: 'add_success_changepassword',
+            payload: 'Change password success',
+         });
+         // navigate('mainFlow');
+      } catch (error) {
+         if (error.response) {
+            // Request made and server responded
+            console.log('error data: ', error.response.data);
+            console.log('error status: ', error.response.status);
+            // console.log('error headers: ', error.response.headers);
+            dispatch({
+               type: 'add_error_changepassword',
+               payload: error.response.data.message,
+            });
+         } else if (error.request) {
+            // The request was made but no response was received
+            // console.log('request: ', error.request);
+         } else {
+            // Something happened in setting up the request that triggered an Error
+            // console.log('Error', error.message);
+         }
+      }
+   };
+
 export const { Provider, Context } = createDataContext(
    authReducer,
    {
@@ -189,6 +241,7 @@ export const { Provider, Context } = createDataContext(
       tryLocalSignin,
       updateEstate,
       exportToExcel,
+      changePassword,
    },
    { token: null, errMessage: '', successMessage: '' }
 );

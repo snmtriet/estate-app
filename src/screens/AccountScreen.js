@@ -1,8 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Context as AuthContext } from '../context/AuthContext';
 import {
-   Box,
    Stack,
    Text,
    VStack,
@@ -11,18 +10,25 @@ import {
    Avatar,
    Flex,
 } from 'native-base';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { Button } from 'react-native-elements';
 import {
    MaterialIcons,
    MaterialCommunityIcons,
    Entypo,
 } from '@expo/vector-icons';
+import NavLink from '../components/NavLink';
 
-const AccountScreen = () => {
+const AccountScreen = ({ navigation }) => {
    const { signout } = useContext(AuthContext);
    const [name, setName] = useState('');
+
+   const handleSignout = async () => {
+      await AsyncStorage.removeItem('dataScanned');
+      await AsyncStorage.removeItem('currentUser');
+      signout();
+   };
 
    useEffect(async () => {
       await AsyncStorage.getItem('fullname').then((data) => {
@@ -136,9 +142,7 @@ const AccountScreen = () => {
                   />
                </Center>
                <Center ml="2">
-                  <Text bg="blueGray.50" color="#18181b" fontSize="md">
-                     Đổi mật khẩu
-                  </Text>
+                  <NavLink routeName="ChangePassword" text="Đổi mật khẩu" />
                </Center>
             </Stack>
 
@@ -154,15 +158,12 @@ const AccountScreen = () => {
                <Center mr={'2'}>
                   <MaterialIcons name="logout" size={30} color="#18181b" />
                </Center>
-               <Center>
-                  <Button
-                     onPress={signout}
-                     title={'Đăng xuất'}
-                     buttonStyle={{
-                        backgroundColor: '#f8fafc',
-                     }}
-                     titleStyle={{ color: '#18181b' }}
-                  />
+               <Center ml="2">
+                  <TouchableOpacity onPress={handleSignout}>
+                     <Text bg="blueGray.50" color="#18181b" fontSize="md">
+                        Đăng xuất
+                     </Text>
+                  </TouchableOpacity>
                </Center>
             </Stack>
          </VStack>

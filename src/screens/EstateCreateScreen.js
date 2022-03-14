@@ -16,7 +16,8 @@ import { NavigationEvents } from 'react-navigation';
 import estateApi from '../api/estate';
 
 const EstateCreateScreen = () => {
-   const { updateEstate, exportToExcel, state } = useContext(AuthContext);
+   const { updateEstate, exportToExcel, state, clearErrMessage } =
+      useContext(AuthContext);
    const [hasPermission, setHasPermission] = useState(null);
    const [scanned, setScanned] = useState(false);
    const [data, setData] = useState('');
@@ -69,17 +70,12 @@ const EstateCreateScreen = () => {
       setScanned(true);
       setData(data);
 
-      const onlyUnique = (value, index, self) => {
-         return self.indexOf(value) === index;
-      };
-
       (getEstate = async () => {
          await estateApi.get(`/estates/${data}`).then((res) => {
             setEstate(res.data.data.estate);
          });
       })();
    };
-   console.log(estateData);
 
    if (hasPermission === null) {
       return <Text>Requesting for camera permission</Text>;
@@ -104,8 +100,11 @@ const EstateCreateScreen = () => {
          showsVerticalScrollIndicator={false}
          style={{ width: '100%', marginTop: 20 }}
       >
-         {/* <NavigationEvents onWillBlur={setScanned(false)} /> */}
-         <View style={styles.container}>
+         {/* <NavigationEvents
+            onWillBlur={setHasPermission(status === 'expires')}
+         /> */}
+
+         {/* <View style={styles.container}>
             <Text>UserID: {currentUser}</Text>
             <View style={styles.barcodebox}>
                <BarCodeScanner
@@ -191,9 +190,9 @@ const EstateCreateScreen = () => {
                >
                   Export to excel
                </Button>
-               {state.errMessage && <Text>{state.errMessage}</Text>}
-            </Center>
-         </View>
+               {/* {state.errMessage && <Text>{state.errMessage}</Text>} */}
+         {/* </Center> */}
+         {/* // </View> */}
       </ScrollView>
    );
 };

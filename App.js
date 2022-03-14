@@ -6,18 +6,28 @@ import AccountScreen from './src/screens/AccountScreen';
 import SigninScreen from './src/screens/SigninScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import EstateCreateScreen from './src/screens/EstateCreateScreen';
-import EstateDetailScreen from './src/screens/EstateDetailScreen';
+import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
 import EstateListScreen from './src/screens/EstateListScreen';
 import { Provider as AuthProvider } from './src/context/AuthContext';
 import { setNavigator } from './src/navigationRef';
 import ResolveAuthScreen from './src/screens/ResolveAuthScreen';
-import { Ionicons, AntDesign, Feather } from '@expo/vector-icons';
+import { Ionicons, AntDesign } from '@expo/vector-icons';
 
 const switchNavigator = createSwitchNavigator({
    ResolveAuth: ResolveAuthScreen,
    loginFlow: createStackNavigator({
-      Signin: SigninScreen,
-      Signup: SignupScreen,
+      Signin: {
+         screen: SigninScreen,
+         navigationOptions: {
+            headerShown: false,
+         },
+      },
+      Signup: {
+         screen: SignupScreen,
+         navigationOptions: {
+            headerShown: false,
+         },
+      },
    }),
    mainFlow: createBottomTabNavigator({
       List: {
@@ -75,12 +85,14 @@ const switchNavigator = createSwitchNavigator({
          },
       },
    }),
-   estateListFlow: createStackNavigator({
-      Create: EstateCreateScreen,
-      EstateDetail: EstateDetailScreen,
-   }),
+   // estateListFlow: createStackNavigator({
+   //    Create: EstateCreateScreen,
+   // }),
    EstateCreate: EstateCreateScreen,
-   Account: AccountScreen,
+   AccountFlow: createSwitchNavigator({
+      Account: AccountScreen,
+      ChangePassword: ChangePasswordScreen,
+   }),
 });
 
 const App = createAppContainer(switchNavigator);

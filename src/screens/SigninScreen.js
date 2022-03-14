@@ -18,6 +18,7 @@ import {
    Icon,
    Alert,
    HStack,
+   WarningOutlineIcon,
 } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NavigationEvents } from 'react-navigation';
@@ -102,11 +103,18 @@ const SigninScreen = ({ navigation }) => {
                                  placeholder="Email"
                                  onChangeText={handleChange('email')}
                                  onBlur={handleBlur('email')}
+                                 borderColor={errors.email && 'red.500'}
                               />
                               {errors.email && (
-                                 <FormControl.HelperText color="red.300">
-                                    <Text color="red.500">{errors.email}</Text>
-                                 </FormControl.HelperText>
+                                 <FormControl isInvalid>
+                                    <FormControl.ErrorMessage
+                                       leftIcon={
+                                          <WarningOutlineIcon size="xs" />
+                                       }
+                                    >
+                                       {errors.email}
+                                    </FormControl.ErrorMessage>
+                                 </FormControl>
                               )}
                            </FormControl>
                            <FormControl>
@@ -129,13 +137,18 @@ const SigninScreen = ({ navigation }) => {
                                  onChangeText={handleChange('password')}
                                  onBlur={handleBlur('password')}
                                  secureTextEntry
+                                 borderColor={errors.password && 'red.500'}
                               />
                               {errors.password && (
-                                 <FormControl.HelperText>
-                                    <Text color="red.500">
+                                 <FormControl isInvalid>
+                                    <FormControl.ErrorMessage
+                                       leftIcon={
+                                          <WarningOutlineIcon size="xs" />
+                                       }
+                                    >
                                        {errors.password}
-                                    </Text>
-                                 </FormControl.HelperText>
+                                    </FormControl.ErrorMessage>
+                                 </FormControl>
                               )}
                               {state.errMessage && (
                                  <Alert w="100%" status="error" mt="4">

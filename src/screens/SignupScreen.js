@@ -17,15 +17,10 @@ import {
    Icon,
    Alert,
    HStack,
+   WarningOutlineIcon,
 } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NavigationEvents } from 'react-navigation';
-
-yup.addMethod(yup.array, 'unique', function (message, mapper = (a) => a) {
-   return this.test('unique', message, function (list) {
-      return list.length === new Set(list.map(mapper)).size;
-   });
-});
 
 const loginValidationSchema = yup.object().shape({
    fullname: yup
@@ -124,13 +119,18 @@ const SignupScreen = ({ navigation }) => {
                                     placeholder="Ex: Nguyen Van A"
                                     onChangeText={handleChange('fullname')}
                                     onBlur={handleBlur('fullname')}
+                                    borderColor={errors.fullname && 'red.500'}
                                  />
                                  {errors.fullname && (
-                                    <FormControl.HelperText>
-                                       <Text color="red.500">
+                                    <FormControl isInvalid>
+                                       <FormControl.ErrorMessage
+                                          leftIcon={
+                                             <WarningOutlineIcon size="xs" />
+                                          }
+                                       >
                                           {errors.fullname}
-                                       </Text>
-                                    </FormControl.HelperText>
+                                       </FormControl.ErrorMessage>
+                                    </FormControl>
                                  )}
                               </FormControl>
                               <FormControl>
@@ -150,13 +150,18 @@ const SignupScreen = ({ navigation }) => {
                                     placeholder="Ex: nva@gmail.com"
                                     onChangeText={handleChange('email')}
                                     onBlur={handleBlur('email')}
+                                    borderColor={errors.email && 'red.500'}
                                  />
                                  {errors.email && (
-                                    <FormControl.HelperText>
-                                       <Text color="red.500">
+                                    <FormControl isInvalid>
+                                       <FormControl.ErrorMessage
+                                          leftIcon={
+                                             <WarningOutlineIcon size="xs" />
+                                          }
+                                       >
                                           {errors.email}
-                                       </Text>
-                                    </FormControl.HelperText>
+                                       </FormControl.ErrorMessage>
+                                    </FormControl>
                                  )}
                               </FormControl>
                               <FormControl>
@@ -179,13 +184,18 @@ const SignupScreen = ({ navigation }) => {
                                     onChangeText={handleChange('password')}
                                     onBlur={handleBlur('password')}
                                     secureTextEntry
+                                    borderColor={errors.password && 'red.500'}
                                  />
                                  {errors.password && (
-                                    <FormControl.HelperText>
-                                       <Text color="red.500">
+                                    <FormControl isInvalid>
+                                       <FormControl.ErrorMessage
+                                          leftIcon={
+                                             <WarningOutlineIcon size="xs" />
+                                          }
+                                       >
                                           {errors.password}
-                                       </Text>
-                                    </FormControl.HelperText>
+                                       </FormControl.ErrorMessage>
+                                    </FormControl>
                                  )}
                               </FormControl>
                               <FormControl>
@@ -212,13 +222,20 @@ const SignupScreen = ({ navigation }) => {
                                     )}
                                     onBlur={handleBlur('passwordConfirm')}
                                     secureTextEntry
+                                    borderColor={
+                                       errors.passwordConfirm && 'red.500'
+                                    }
                                  />
                                  {errors.passwordConfirm && (
-                                    <FormControl.HelperText>
-                                       <Text color="red.500">
+                                    <FormControl isInvalid>
+                                       <FormControl.ErrorMessage
+                                          leftIcon={
+                                             <WarningOutlineIcon size="xs" />
+                                          }
+                                       >
                                           {errors.passwordConfirm}
-                                       </Text>
-                                    </FormControl.HelperText>
+                                       </FormControl.ErrorMessage>
+                                    </FormControl>
                                  )}
                                  {state.errMessage && (
                                     <Alert w="100%" status="error" mt="4">
