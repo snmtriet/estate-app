@@ -30,24 +30,24 @@ const switchNavigator = createSwitchNavigator({
       },
    }),
    mainFlow: createBottomTabNavigator({
-      List: {
-         screen: EstateListScreen,
-         navigationOptions: {
-            tabBarLabel: 'List Estate',
-            tabBarOptions: {
-               activeTintColor: '#18181b',
-            },
-            tabBarIcon: (tabInfo) => {
-               return (
-                  <Ionicons
-                     name="md-home"
-                     size={24}
-                     color={tabInfo.focused ? '#18181b' : '#8e8e93'}
-                  />
-               );
-            },
-         },
-      },
+      // List: {
+      //    screen: EstateListScreen,
+      //    navigationOptions: {
+      //       tabBarLabel: 'List Estate',
+      //       tabBarOptions: {
+      //          activeTintColor: '#18181b',
+      //       },
+      //       tabBarIcon: (tabInfo) => {
+      //          return (
+      //             <Ionicons
+      //                name="md-home"
+      //                size={24}
+      //                color={tabInfo.focused ? '#18181b' : '#8e8e93'}
+      //             />
+      //          );
+      //       },
+      //    },
+      // },
       Create: {
          screen: EstateCreateScreen,
          navigationOptions: {

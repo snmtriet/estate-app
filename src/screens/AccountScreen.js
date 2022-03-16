@@ -17,6 +17,7 @@ import {
    MaterialIcons,
    MaterialCommunityIcons,
    Entypo,
+   AntDesign,
 } from '@expo/vector-icons';
 import NavLink from '../components/NavLink';
 
@@ -66,42 +67,7 @@ const AccountScreen = ({ navigation }) => {
                   </Text>
                </Center>
             </Stack>
-            <Stack
-               direction="row"
-               h="20"
-               bg="blueGray.50"
-               rounded="xs"
-               pl="5"
-               minWidth="800"
-               flex={1}
-            >
-               <Center mr="2">
-                  <Entypo name="controller-stop" size={30} color="#18181b" />
-               </Center>
-               <Center ml="2">
-                  <Text bg="blueGray.50" color="#18181b" fontSize="md">
-                     Coming soon
-                  </Text>
-               </Center>
-            </Stack>
-            <Stack
-               direction="row"
-               h="20"
-               bg="blueGray.50"
-               rounded="xs"
-               pl="5"
-               minWidth="800"
-               flex={1}
-            >
-               <Center mr="2">
-                  <Entypo name="controller-stop" size={30} color="#18181b" />
-               </Center>
-               <Center ml="2">
-                  <Text bg="blueGray.50" color="#18181b" fontSize="md">
-                     Coming soon
-                  </Text>
-               </Center>
-            </Stack>
+
             <Stack
                direction="row"
                h="20"
@@ -124,7 +90,6 @@ const AccountScreen = ({ navigation }) => {
                   </Text>
                </Center>
             </Stack>
-
             <Stack
                direction="row"
                h="20"
@@ -145,7 +110,42 @@ const AccountScreen = ({ navigation }) => {
                   <NavLink routeName="ChangePassword" text="Đổi mật khẩu" />
                </Center>
             </Stack>
-
+            <Stack
+               direction="row"
+               h="20"
+               bg="blueGray.50"
+               rounded="xs"
+               pl="5"
+               minWidth="800"
+               flex={1}
+            >
+               <Center mr="2">
+                  <Entypo name="controller-stop" size={30} color="#18181b" />
+               </Center>
+               <Center ml="2">
+                  <Text bg="blueGray.50" color="#18181b" fontSize="md">
+                     Coming soon
+                  </Text>
+               </Center>
+            </Stack>
+            <Stack
+               direction="row"
+               h="20"
+               bg="blueGray.50"
+               rounded="xs"
+               pl="5"
+               minWidth="800"
+               flex={1}
+            >
+               <Center mr="2">
+                  <Entypo name="controller-stop" size={30} color="#18181b" />
+               </Center>
+               <Center ml="2">
+                  <Text bg="blueGray.50" color="#18181b" fontSize="md">
+                     Coming soon
+                  </Text>
+               </Center>
+            </Stack>
             <Stack
                direction="row"
                h="20"

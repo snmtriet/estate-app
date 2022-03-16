@@ -18,6 +18,7 @@
     "expo-barcode-scanner": "~11.2.0",
     "expo-status-bar": "~1.2.0",
     "formik": "^2.2.9",
+    "moment": "^2.29.1",
     "native-base": "^3.3.7",
     "react": "17.0.1",
     "react-dom": "17.0.1",

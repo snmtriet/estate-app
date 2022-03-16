@@ -122,6 +122,7 @@ const onlyUnique = (value, index, self) => {
 const exportToExcel = (dispatch) => async () => {
    const token = await AsyncStorage.getItem('token');
    const arrIds = await AsyncStorage.getItem('savedIds');
+   const user = await AsyncStorage.getItem('currentUser');
    if (arrIds) {
       const objIds = JSON.parse([arrIds]);
       const uniqueObjIds = objIds.filter(onlyUnique);
