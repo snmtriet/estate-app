@@ -21,45 +21,76 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { NavigationEvents } from 'react-navigation';
 import NavLink from '../components/NavLink';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import estateApi from '../api/estate';
 
-const loginValidationSchema = yup.object().shape({
-   currentPassword: yup.string().required('Current password is Required'),
-   newPassword: yup
+const updateUserSchema = yup.object().shape({
+   fullname: yup
       .string()
-      .min(8, ({ min }) => `Password must be at least ${min} characters`)
-      .required('New password is required'),
-   newPasswordConfirm: yup
+      .min(8, ({ min }) => `Fullname must be at least ${min} characters`),
+   phone: yup
       .string()
-      .required('Confirm new password is required')
-      .oneOf([yup.ref('newPassword'), null], 'New passwords must match'),
+      .matches(
+         /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/,
+         'Only number are allowed for this field'
+      ),
+   age: yup
+      .number()
+      .min(1, ({ min }) => `age must be at least ${min} year old`)
+      .max(200, ({ max }) => `age cannot more than ${max} years old`),
 });
 
 const ChangePasswordScreen = ({ navigation }) => {
-   const { changePassword, state } = useContext(Context);
+   const { updateMe, state, clearErrMessage } = useContext(Context);
    const [showSuccess, setShowSuccess] = useState(false);
    const [showErr, setShowErr] = useState(false);
+   const [user, setUser] = useState({});
 
    useEffect(() => {
-      if (state.errMessageChangePassword) {
+      if (state.errMessageUpdateMe) {
          setShowSuccess(false);
          setShowErr(true);
       }
-      if (state.successMessageChangePassword) {
+      if (state.successMessageUpdateMe) {
          setShowErr(false);
          setShowSuccess(true);
       }
-   }, [state.errMessageChangePassword, state.successMessageChangePassword]);
+   }, [state.errMessageUpdateMe, state.successMessageUpdateMe]);
+
+   useEffect(() => {
+      let isMounted = false;
+      const getData = async () => {
+         const token = await AsyncStorage.getItem('token');
+         await AsyncStorage.getItem('currentUser').then(async (id) => {
+            try {
+               const user = await estateApi.get(`/users/${id}`, {
+                  headers: {
+                     Authorization: `Bearer ${token}`,
+                  },
+               });
+               setUser(user.data.data.user);
+               isMounted = true;
+            } catch (error) {
+               console.log(error.response.data.message);
+            }
+         });
+      };
+      getData();
+      return () => {
+         isMounted = false;
+      };
+   }, []);
 
    return (
       <View style={styles.container}>
          <Formik
-            validationSchema={loginValidationSchema}
+            validationSchema={updateUserSchema}
             initialValues={{
-               currentPassword: '',
-               newPassword: '',
-               newPasswordConfirm: '',
+               fullname: '',
+               age: '',
+               phone: '',
             }}
-            onSubmit={changePassword}
+            onSubmit={updateMe}
          >
             {({
                handleChange,
@@ -71,6 +102,7 @@ const ChangePasswordScreen = ({ navigation }) => {
             }) => (
                <>
                   <Center w="100%" mt={40}>
+                     <NavigationEvents onWillBlur={clearErrMessage} />
                      <Box
                         safeArea
                         p="2"
@@ -93,114 +125,70 @@ const ChangePasswordScreen = ({ navigation }) => {
                         </TouchableOpacity>
                         <VStack space={3} mt="20">
                            <FormControl>
-                              <FormControl.Label>
-                                 Current Password
-                              </FormControl.Label>
+                              <FormControl.Label>Fullname</FormControl.Label>
                               <Input
-                                 InputRightElement={
-                                    <Icon
-                                       as={
-                                          <MaterialIcons name="visibility-off" />
-                                       }
-                                       size={5}
-                                       mr="2"
-                                       color="muted.400"
-                                    />
-                                 }
                                  padding={{ base: '2', md: '5' }}
-                                 type="password"
-                                 defaultValue={values.currentPassword}
-                                 placeholder="Current password"
-                                 onChangeText={handleChange('currentPassword')}
-                                 onBlur={handleBlur('currentPassword')}
-                                 borderColor={
-                                    errors.currentPassword && 'red.500'
-                                 }
+                                 type="text"
+                                 defaultValue={user.fullname}
+                                 placeholder="Fullname"
+                                 onChangeText={handleChange('fullname')}
+                                 onBlur={handleBlur('fullname')}
+                                 borderColor={errors.fullname && 'red.500'}
                               />
-                              {errors.currentPassword && (
+                              {errors.fullname && (
                                  <FormControl isInvalid>
                                     <FormControl.ErrorMessage
                                        leftIcon={
                                           <WarningOutlineIcon size="xs" />
                                        }
                                     >
-                                       {errors.currentPassword}
+                                       {errors.fullname}
                                     </FormControl.ErrorMessage>
                                  </FormControl>
                               )}
                            </FormControl>
                            <FormControl>
-                              <FormControl.Label>
-                                 New Password
-                              </FormControl.Label>
+                              <FormControl.Label>Age</FormControl.Label>
                               <Input
-                                 InputRightElement={
-                                    <Icon
-                                       as={
-                                          <MaterialIcons name="visibility-off" />
-                                       }
-                                       size={5}
-                                       mr="2"
-                                       color="muted.400"
-                                    />
-                                 }
                                  padding={{ base: '2', md: '5' }}
-                                 type="password"
-                                 defaultValue={values.newPassword}
-                                 placeholder="New password"
-                                 onChangeText={handleChange('newPassword')}
-                                 onBlur={handleBlur('newPassword')}
-                                 secureTextEntry
-                                 borderColor={errors.newPassword && 'red.500'}
+                                 type="text"
+                                 defaultValue={user.age}
+                                 placeholder="Age"
+                                 onChangeText={handleChange('age')}
+                                 onBlur={handleBlur('age')}
+                                 borderColor={errors.age && 'red.500'}
                               />
-                              {errors.newPassword && (
+                              {errors.age && (
                                  <FormControl isInvalid>
                                     <FormControl.ErrorMessage
                                        leftIcon={
                                           <WarningOutlineIcon size="xs" />
                                        }
                                     >
-                                       {errors.newPassword}
+                                       {errors.age}
                                     </FormControl.ErrorMessage>
                                  </FormControl>
                               )}
                            </FormControl>
                            <FormControl>
-                              <FormControl.Label>
-                                 Confirm New Password
-                              </FormControl.Label>
+                              <FormControl.Label>Phone</FormControl.Label>
                               <Input
-                                 InputRightElement={
-                                    <Icon
-                                       as={
-                                          <MaterialIcons name="visibility-off" />
-                                       }
-                                       size={5}
-                                       mr="2"
-                                       color="muted.400"
-                                    />
-                                 }
                                  padding={{ base: '2', md: '5' }}
-                                 type="password"
-                                 defaultValue={values.newPasswordConfirm}
-                                 placeholder="Confirm new password"
-                                 onChangeText={handleChange(
-                                    'newPasswordConfirm'
-                                 )}
-                                 onBlur={handleBlur('newPasswordConfirm')}
-                                 secureTextEntry
-                                 borderColor={
-                                    errors.newPasswordConfirm && 'red.500'
-                                 }
+                                 type="text"
+                                 defaultValue={user.phone}
+                                 placeholder="Phone"
+                                 onChangeText={handleChange('phone')}
+                                 onBlur={handleBlur('phone')}
+                                 borderColor={errors.phone && 'red.500'}
                               />
-                              {errors.newPasswordConfirm && (
+                              {errors.phone && (
                                  <FormControl isInvalid>
                                     <FormControl.ErrorMessage
                                        leftIcon={
                                           <WarningOutlineIcon size="xs" />
                                        }
                                     >
-                                       {errors.newPasswordConfirm}
+                                       {errors.phone}
                                     </FormControl.ErrorMessage>
                                  </FormControl>
                               )}
@@ -218,7 +206,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                                                 fontSize="md"
                                                 color="coolGray.800"
                                              >
-                                                {state.errMessageChangePassword}
+                                                {state.errMessageUpdateMe}
                                              </Text>
                                           </HStack>
                                        </HStack>
@@ -239,9 +227,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                                                 fontSize="md"
                                                 color="coolGray.800"
                                              >
-                                                {
-                                                   state.successMessageChangePassword
-                                                }
+                                                {state.successMessageUpdateMe}
                                              </Text>
                                           </HStack>
                                        </HStack>
@@ -256,7 +242,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                               onPress={handleSubmit}
                               disabled={!isValid}
                            >
-                              Update Password
+                              Update User
                            </Button>
                         </VStack>
                      </Box>

@@ -7,11 +7,12 @@ import SigninScreen from './src/screens/SigninScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import EstateCreateScreen from './src/screens/EstateCreateScreen';
 import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
-import EstateListScreen from './src/screens/EstateListScreen';
+import EstateInventoryScreen from './src/screens/EstateInventoryScreen';
 import { Provider as AuthProvider } from './src/context/AuthContext';
 import { setNavigator } from './src/navigationRef';
 import ResolveAuthScreen from './src/screens/ResolveAuthScreen';
-import { Ionicons, AntDesign } from '@expo/vector-icons';
+import { Ionicons, AntDesign, MaterialIcons } from '@expo/vector-icons';
+import ChangeInfoScreen from './src/screens/ChangeInfoScreen ';
 
 const switchNavigator = createSwitchNavigator({
    ResolveAuth: ResolveAuthScreen,
@@ -30,24 +31,24 @@ const switchNavigator = createSwitchNavigator({
       },
    }),
    mainFlow: createBottomTabNavigator({
-      // List: {
-      //    screen: EstateListScreen,
-      //    navigationOptions: {
-      //       tabBarLabel: 'List Estate',
-      //       tabBarOptions: {
-      //          activeTintColor: '#18181b',
-      //       },
-      //       tabBarIcon: (tabInfo) => {
-      //          return (
-      //             <Ionicons
-      //                name="md-home"
-      //                size={24}
-      //                color={tabInfo.focused ? '#18181b' : '#8e8e93'}
-      //             />
-      //          );
-      //       },
-      //    },
-      // },
+      List: {
+         screen: EstateInventoryScreen,
+         navigationOptions: {
+            tabBarLabel: 'Inventories',
+            tabBarOptions: {
+               activeTintColor: '#18181b',
+            },
+            tabBarIcon: (tabInfo) => {
+               return (
+                  <MaterialIcons
+                     name="inventory"
+                     size={24}
+                     color={tabInfo.focused ? '#18181b' : '#8e8e93'}
+                  />
+               );
+            },
+         },
+      },
       Create: {
          screen: EstateCreateScreen,
          navigationOptions: {
@@ -85,13 +86,11 @@ const switchNavigator = createSwitchNavigator({
          },
       },
    }),
-   // estateListFlow: createStackNavigator({
-   //    Create: EstateCreateScreen,
-   // }),
    EstateCreate: EstateCreateScreen,
    AccountFlow: createSwitchNavigator({
       Account: AccountScreen,
       ChangePassword: ChangePasswordScreen,
+      ChangeInfo: ChangeInfoScreen,
    }),
 });
 

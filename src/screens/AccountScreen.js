@@ -17,12 +17,12 @@ import {
    MaterialIcons,
    MaterialCommunityIcons,
    Entypo,
-   AntDesign,
 } from '@expo/vector-icons';
+import { NavigationEvents } from 'react-navigation';
 import NavLink from '../components/NavLink';
 
 const AccountScreen = ({ navigation }) => {
-   const { signout } = useContext(AuthContext);
+   const { signout, clearErrMessage } = useContext(AuthContext);
    const [name, setName] = useState('');
 
    const handleSignout = async () => {
@@ -42,6 +42,7 @@ const AccountScreen = ({ navigation }) => {
    }, []);
    return (
       <Flex bg="#F2F2F2" direction="row" flex={1}>
+         <NavigationEvents onWillBlur={clearErrMessage} />
          <VStack space={'1'} alignItems="center" mt={10}>
             <Stack
                direction="row"
@@ -85,9 +86,9 @@ const AccountScreen = ({ navigation }) => {
                   />
                </Center>
                <Center ml="2">
-                  <Text bg="blueGray.50" color="#18181b" fontSize="md">
-                     Thông tin cá nhân
-                  </Text>
+                  <Center ml="2">
+                     <NavLink routeName="ChangeInfo" text="Thông tin cá nhân" />
+                  </Center>
                </Center>
             </Stack>
             <Stack

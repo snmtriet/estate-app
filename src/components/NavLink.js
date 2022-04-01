@@ -12,7 +12,7 @@ const NavLink = ({ navigation, text, routeName }) => {
                navigation.navigate(routeName);
             }}
          >
-            {routeName !== 'ChangePassword' ? (
+            {routeName !== 'ChangePassword' && routeName !== 'ChangeInfo' ? (
                <HStack mt="0" justifyContent="center">
                   {text !== 'Go back' ? (
                      <Text

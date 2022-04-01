@@ -19,6 +19,18 @@ const authReducer = (state, action) => {
             errMessageChangePassword: '',
             successMessageChangePassword: action.payload,
          };
+      case 'add_success_updateMe':
+         return {
+            ...state,
+            successMessageUpdateMe: action.payload,
+            errMessageUpdateMe: '',
+         };
+      case 'add_error_updateMe':
+         return {
+            ...state,
+            successMessageUpdateMe: '',
+            errMessageUpdateMe: action.payload,
+         };
       case 'signin':
          return {
             errMessage: '',
@@ -30,7 +42,15 @@ const authReducer = (state, action) => {
             token: action.payload,
          };
       case 'clear_err_message':
-         return { ...state, errMessage: '', successMessageChangePassword: '' };
+         return {
+            ...state,
+            errMessage: '',
+            successMessageChangePassword: '',
+            successMessageUpdateMe: '',
+            errMessageUpdateMe: '',
+         };
+      case 'dataScanned':
+         return { ...state, dataScanned: action.payload };
       case 'signout':
          return { token: null, errMessage: '' };
       default:
@@ -59,6 +79,7 @@ const signup =
          const response = await estateApi.post('/users/signup', {
             fullname,
             email,
+            faculty: '6229da9cea2aa2a176e775b0',
             password,
             passwordConfirm,
          });
@@ -108,7 +129,7 @@ const signin =
 
 const signout = (dispatch) => async () => {
    await AsyncStorage.removeItem('token');
-   await AsyncStorage.removeItem('savedIds');
+   // await AsyncStorage.removeItem('savedIds');
    await AsyncStorage.removeItem('currentUser');
    dispatch({ type: 'signout' });
    navigate('loginFlow');
@@ -121,14 +142,16 @@ const onlyUnique = (value, index, self) => {
 
 const exportToExcel = (dispatch) => async () => {
    const token = await AsyncStorage.getItem('token');
-   const arrIds = await AsyncStorage.getItem('savedIds');
+   const arrIds = await AsyncStorage.getItem('saveIdsCategory');
    const user = await AsyncStorage.getItem('currentUser');
-   if (arrIds) {
-      const objIds = JSON.parse([arrIds]);
-      const uniqueObjIds = objIds.filter(onlyUnique);
+   const objIds = JSON.parse([arrIds]);
+   const uniqueObjIds = objIds.filter(onlyUnique);
+
+   // export
+   if (uniqueObjIds) {
       await estateApi
          .post(
-            '/inventory',
+            '/inventories',
             {
                user,
                checkList: uniqueObjIds,
@@ -140,54 +163,12 @@ const exportToExcel = (dispatch) => async () => {
             }
          )
          .then(async (response) => {
-            await AsyncStorage.removeItem('savedIds');
+            await AsyncStorage.removeItem('saveIdsCategory');
             await AsyncStorage.removeItem('dataScanned');
          })
-         .catch((err) => console.log(err));
+         .catch((err) => console.log(err.response.data.message));
    }
 };
-
-const updateEstate =
-   (dispatch) =>
-   async ({ data, status }) => {
-      try {
-         await estateApi
-            .patch(`/estates/${data}`, {
-               status,
-            })
-            .then(async (res) => {
-               await AsyncStorage.getItem('dataScanned', (err, result) => {
-                  const estate = [res.data.data.estate];
-                  if (result !== null) {
-                     var newEstate = JSON.parse(result).concat(estate);
-                     AsyncStorage.setItem(
-                        'dataScanned',
-                        JSON.stringify(newEstate)
-                     );
-                  } else {
-                     AsyncStorage.setItem(
-                        'dataScanned',
-                        JSON.stringify(estate)
-                     );
-                  }
-               });
-            });
-
-         // console.log(await AsyncStorage.getItem('dataScanned'));
-
-         await AsyncStorage.getItem('savedIds', (err, result) => {
-            const id = [data];
-            if (result !== null) {
-               var newIds = JSON.parse(result).concat(id);
-               AsyncStorage.setItem('savedIds', JSON.stringify(newIds));
-            } else {
-               AsyncStorage.setItem('savedIds', JSON.stringify(id));
-            }
-         });
-      } catch (error) {
-         console.log(error.message);
-      }
-   };
 
 const changePassword =
    (dispatch) =>
@@ -231,6 +212,41 @@ const changePassword =
          }
       }
    };
+const updateMe =
+   (dispatch) =>
+   async ({ fullname, age, phone }) => {
+      console.log('🍕 ~ fullname, age, phone', fullname, age, phone);
+      const token = await AsyncStorage.getItem('token');
+      var params;
+      if (fullname && !age && !phone) {
+         params = { fullname };
+      } else if (!fullname && age && !phone) {
+         params = { age };
+      } else if (!fullname && !age && phone) {
+         params = { phone };
+      } else {
+         params = { fullname, age, phone };
+      }
+      try {
+         await estateApi.patch('/users/updateMe', params, {
+            headers: {
+               Authorization: `Bearer ${token}`,
+            },
+         });
+         dispatch({
+            type: 'add_success_updateMe',
+            payload: 'Change info success',
+         });
+         await AsyncStorage.setItem('fullname', fullname);
+      } catch (error) {
+         if (error.response) {
+            dispatch({
+               type: 'add_error_updateMe',
+               payload: error.response.data.message,
+            });
+         }
+      }
+   };
 
 export const { Provider, Context } = createDataContext(
    authReducer,
@@ -240,9 +256,9 @@ export const { Provider, Context } = createDataContext(
       signout,
       clearErrMessage,
       tryLocalSignin,
-      updateEstate,
       exportToExcel,
       changePassword,
+      updateMe,
    },
    { token: null, errMessage: '', successMessage: '' }
 );

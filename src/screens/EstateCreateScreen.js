@@ -15,7 +15,11 @@ import {
    Flex,
    Spinner,
    useToast,
+   Divider,
+   Alert,
+   Menu,
 } from 'native-base';
+
 import { View, StyleSheet, ScrollView, FlatList } from 'react-native';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,24 +32,45 @@ const EstateCreateScreen = () => {
    const toast = useToast();
    const cancelRef = useRef(null);
 
-   const { updateEstate, exportToExcel, state, clearErrMessage } =
-      useContext(AuthContext);
+   const { exportToExcel, state } = useContext(AuthContext);
    const [hasPermission, setHasPermission] = useState(null);
    const [scanned, setScanned] = useState(false);
    const [data, setData] = useState('');
-   const [currentUser, setCurrentUser] = useState('');
    const [status, setStatus] = useState('');
-   const [errRadio, setErrRadio] = useState('');
-   const [successRadio, setSuccessRadio] = useState('');
    const [estate, setEstate] = useState({});
    const [dataScanned, setDataScanned] = useState([]);
    const [async, setAsync] = useState(false);
    const [render, setRender] = useState(false);
    const [loading, setLoading] = useState(true);
+   const [showErr, setShowErr] = useState(false);
+   const [showSuccess, setShowSuccess] = useState(false);
+   const [arrayUniqueByKey, setArrayUniqueByKey] = useState([]);
+   const [dataCategory, setDataCategory] = useState([]);
+   let [category, setCategory] = useState('');
 
-   const handleUpdateEstate = (data, status) => {
+   useEffect(() => {
+      if (state.errMessageChangePassword) {
+         setShowSuccess(false);
+         setShowErr(true);
+         toast.show({
+            title: 'Save error',
+            description: state.errMessageChangePassword,
+            placement: 'top',
+            status: 'error',
+            duration: 2000,
+         });
+      } else {
+         setShowErr(false);
+         setShowSuccess(false);
+      }
+      if (state.successMessageUpdateMe) {
+         setShowErr(false);
+         setShowSuccess(true);
+      }
+   }, [state.errMessageChangePassword, state.successMessageUpdateMe]);
+
+   const handleUpdateEstate = async (data, status) => {
       if (!status) {
-         setErrRadio('Vui lòng chọn trạng thái!');
          setHasPermission(false);
          handleScanAgain();
          onClose();
@@ -57,18 +82,146 @@ const EstateCreateScreen = () => {
             duration: 2000,
          });
       } else {
-         if (updateEstate({ data, status })) {
-            setErrRadio('');
-            setSuccessRadio('Cập nhật thành công');
+         try {
+            const token = await AsyncStorage.getItem('token');
+            await estateApi
+               .patch(
+                  `/estates/${data}`,
+                  {
+                     status,
+                     updatedAt: Date.now(),
+                  },
+                  {
+                     headers: {
+                        Authorization: `Bearer ${token}`,
+                     },
+                  }
+               )
+               .then(async (res) => {
+                  await AsyncStorage.getItem('dataScanned', (err, result) => {
+                     const estate = [res.data.data.estate];
+                     if (result !== null) {
+                        var newEstate = JSON.parse(result).concat(estate);
+                        AsyncStorage.setItem(
+                           'dataScanned',
+                           JSON.stringify(newEstate)
+                        );
+                     } else {
+                        AsyncStorage.setItem(
+                           'dataScanned',
+                           JSON.stringify(estate)
+                        );
+                     }
+                  });
+                  await AsyncStorage.getItem(
+                     'saveIdsCategory',
+                     (err, result) => {
+                        const idCategory = [res.data.data.estate.category._id];
+                        if (result !== null) {
+                           var newIds = JSON.parse(result).concat(idCategory);
+                           AsyncStorage.setItem(
+                              'saveIdsCategory',
+                              JSON.stringify(newIds)
+                           );
+                        } else {
+                           AsyncStorage.setItem(
+                              'saveIdsCategory',
+                              JSON.stringify(idCategory)
+                           );
+                        }
+                     }
+                  );
+                  const IdsCategories = await AsyncStorage.getItem(
+                     'saveIdsCategory'
+                  );
+                  const objIds = JSON.parse([IdsCategories]);
+                  const onlyUnique = (value, index, self) => {
+                     return self.indexOf(value) === index;
+                  };
+                  const uniqueObjIds = objIds.filter(onlyUnique);
+                  const estateList = await estateApi.get('/estates', {
+                     headers: {
+                        Authorization: `Bearer ${token}`,
+                     },
+                  });
+                  const estateData = estateList.data.data.estates;
+                  uniqueObjIds.map(async (id) => {
+                     const total = await estateData.filter((item2) => {
+                        return id === item2.category._id;
+                     });
+                     const data = await AsyncStorage.getItem('dataScanned');
+                     const parseDataScanned = JSON.parse(data);
+                     const key = '_id';
+                     const arrayUniqueByKey = [
+                        ...new Map(
+                           parseDataScanned.map((item) => [item[key], item])
+                        ).values(),
+                     ];
+                     const filter = await arrayUniqueByKey.filter((item2) => {
+                        return id === item2.category._id;
+                     });
+                     const statusArr = filter.map((item) => item.status);
+                     let dsd = 0;
+                     let hhcsc = 0;
+                     let hhxtl = 0;
+                     let kncsd = 0;
+                     statusArr.map((statusText) => {
+                        switch (statusText) {
+                           case 'Đang sử dụng':
+                              return dsd++;
+                           case 'Hư hỏng chờ sửa chữa':
+                              return hhcsc++;
+                           case 'Hư hỏng xin thanh lý':
+                              return hhxtl++;
+                           case 'Không nhu cầu sử dụng':
+                              return kncsd++;
+                           default:
+                              throw new Error('Invalid status');
+                        }
+                     });
+
+                     if (id) {
+                        await estateApi.patch(
+                           `/categories/${id}`,
+                           {
+                              totalEstate: total.length,
+                              statistics: {
+                                 dsd,
+                                 hhcsc,
+                                 hhxtl,
+                                 kncsd,
+                              },
+                           },
+                           {
+                              headers: {
+                                 Authorization: `Bearer ${token}`,
+                              },
+                           }
+                        );
+                     }
+                  });
+               });
+
             setHasPermission(false);
             handleScanAgain();
             onClose();
             setRender(false);
+            if (!showErr && showSuccess) {
+               toast.show({
+                  title: 'Save success',
+                  description: 'Lưu thành công!',
+                  placement: 'top',
+                  status: 'success',
+                  duration: 2000,
+               });
+            }
+         } catch (error) {
+            console.log(error.response.data.message);
             toast.show({
-               title: 'Save success',
-               description: 'Lưu thành công!',
+               title: 'Authorization error',
+               description: error.response.data.message,
                placement: 'top',
-               status: 'success',
+               status: 'error',
                duration: 2000,
             });
          }
@@ -79,20 +232,8 @@ const EstateCreateScreen = () => {
 
    const handleScanAgain = () => {
       setStatus('');
-      setErrRadio('');
-      setSuccessRadio('');
       setScanned(false);
    };
-
-   useEffect(() => {
-      const getAsyncData = async () => {
-         await AsyncStorage.getItem('currentUser').then((id) => {
-            setCurrentUser(id);
-         });
-      };
-      getAsyncData();
-   }, []);
-
    useEffect(() => {
       (async () => {
          const { status } = await BarCodeScanner.requestPermissionsAsync();
@@ -116,12 +257,21 @@ const EstateCreateScreen = () => {
                }
             })
             .then((arrayUniqueByKey) => {
+               const b = arrayUniqueByKey.map((item) => {
+                  return item.category;
+               });
+               const arrCategoryUnique = [
+                  ...new Map(b.map((item) => [item['_id'], item])).values(),
+               ];
+               setDataCategory(arrCategoryUnique);
                setDataScanned(arrayUniqueByKey);
+               setArrayUniqueByKey(arrayUniqueByKey);
                setLoading(false);
                setRender(true);
             })
             .catch((err) => console.log(err));
       };
+
       getData();
    }, [render]);
 
@@ -172,23 +322,91 @@ const EstateCreateScreen = () => {
                         Đã quét: {dataScanned ? dataScanned.length : 0}
                      </Heading>
                      {dataScanned && dataScanned.length !== 0 && (
-                        <Button
-                           onPress={async () => {
-                              exportToExcel();
-                              setDataScanned([]);
-                              toast.show({
-                                 title: 'Export success',
-                                 description: 'Xuất thành công!',
-                                 placement: 'top',
-                                 status: 'success',
-                                 duration: 2000,
-                              });
-                           }}
-                        >
-                           Export
-                        </Button>
+                        <Flex direction="row" justifyContent="space-between">
+                           <Menu
+                              w={200}
+                              trigger={(triggerProps) => {
+                                 return (
+                                    <Button {...triggerProps}>
+                                       Filter categories
+                                    </Button>
+                                 );
+                              }}
+                           >
+                              <Menu.OptionGroup title="Categories" type="radio">
+                                 <Menu.ItemOption
+                                    key={'all'}
+                                    value={'All'}
+                                    onPress={async () => {
+                                       setDataScanned(arrayUniqueByKey);
+                                    }}
+                                 >
+                                    All
+                                 </Menu.ItemOption>
+
+                                 {dataCategory.map((item) => {
+                                    return (
+                                       <Menu.ItemOption
+                                          key={item._id}
+                                          value={item._id}
+                                          onPress={() => {
+                                             const b = arrayUniqueByKey.filter(
+                                                (item2) => {
+                                                   return (
+                                                      item2.category.name ===
+                                                      item.name
+                                                   );
+                                                }
+                                             );
+                                             setDataScanned(b);
+                                          }}
+                                       >
+                                          {item.name}
+                                       </Menu.ItemOption>
+                                    );
+                                 })}
+                              </Menu.OptionGroup>
+                           </Menu>
+                           <Button
+                              ml={2}
+                              onPress={async () => {
+                                 exportToExcel();
+                                 setDataScanned([]);
+                                 toast.show({
+                                    title: 'Export success',
+                                    description: 'Xuất thành công!',
+                                    placement: 'top',
+                                    status: 'success',
+                                    duration: 2000,
+                                 });
+                              }}
+                           >
+                              Export
+                           </Button>
+                        </Flex>
                      )}
                   </Flex>
+                  {showErr && (
+                     <Center>
+                        <Alert w="100%" status="error" mt="4">
+                           <VStack space={2} flexShrink={1} w="80%">
+                              <HStack
+                                 flexShrink={1}
+                                 space={2}
+                                 justifyContent="space-between"
+                              >
+                                 <HStack space={2} flexShrink={1}>
+                                    <Alert.Icon mt="1" />
+                                    <Text fontSize="md" color="coolGray.800">
+                                       {state.errMessageChangePassword}
+                                    </Text>
+                                 </HStack>
+                              </HStack>
+                           </VStack>
+                        </Alert>
+                     </Center>
+                  )}
+
                   <FlatList
                      data={dataScanned}
                      renderItem={({ item }) => (
@@ -229,15 +447,6 @@ const EstateCreateScreen = () => {
                               </VStack>
                               <Spacer />
                               <VStack w={'45%'}>
-                                 {/* <Text
-                                    _dark={{
-                                       color: 'warmGray.50',
-                                    }}
-                                    color="coolGray.600"
-                                    bold
-                                 >
-                                    {item._id}
-                                 </Text> */}
                                  <Text
                                     color="coolGray.600"
                                     _dark={{
@@ -245,21 +454,25 @@ const EstateCreateScreen = () => {
                                     }}
                                     bold
                                  >
-                                    Ngày mua:{' '}
+                                    Ngày tạo:{' '}
                                     {moment(item.createdAt).format(
                                        'DD-MM-YYYY'
                                     )}
                                  </Text>
-                                 <Text
-                                    color="coolGray.600"
-                                    _dark={{
-                                       color: 'warmGray.200',
-                                    }}
-                                    bold
-                                 >
-                                    Giờ tạo:{' '}
-                                    {moment(item.createdAt).format('HH:mm:ss')}
-                                 </Text>
+                                 {item.updatedAt && (
+                                    <Text
+                                       color="coolGray.600"
+                                       _dark={{
+                                          color: 'warmGray.200',
+                                       }}
+                                       bold
+                                    >
+                                       Lần kiểm gần đây:{' '}
+                                       {moment(item.updatedAt).format(
+                                          'HH:mm:ss'
+                                       )}
+                                    </Text>
+                                 )}
                               </VStack>
                            </HStack>
                         </Box>
@@ -278,9 +491,11 @@ const EstateCreateScreen = () => {
                         onPress={() => {
                            setHasPermission(true);
                            setIsOpen(!isOpen);
+                           setRender(true);
                         }}
+                        disabled={showErr}
                      >
-                        Bắt đầu quét
+                        Kiểm kê
                      </Button>
                   </View>
                </View>
@@ -308,59 +523,86 @@ const EstateCreateScreen = () => {
                <AlertDialog.Body>
                   <ScrollView showsVerticalScrollIndicator={false}>
                      <View style={styles.container}>
-                        <Text>UserID: {currentUser}</Text>
                         <View style={styles.barcodebox}>
                            <BarCodeScanner
                               onBarCodeScanned={
                                  scanned ? undefined : handleBarCodeScanned
                               }
-                              style={{ height: 550, width: 400 }}
+                              style={{ height: 600, width: 600 }}
                            />
                         </View>
                         {scanned && (
                            <View>
                               {estate.name && (
-                                 <Center>
+                                 <>
                                     <Text style={styles.maintext}>
-                                       {estate.name}
+                                       Tên: {estate.name}
                                     </Text>
-                                 </Center>
+                                    <Text style={styles.maintext}>
+                                       Loại: {estate.category.name}
+                                    </Text>
+                                    <Text style={styles.maintext}>
+                                       Ngày tạo :{' '}
+                                       {moment(estate.createdAt).format(
+                                          'DD-MM-YYYY'
+                                       )}
+                                    </Text>
+                                    {estate.updatedAt && (
+                                       <Text style={styles.maintext}>
+                                          Lần kiểm gần đây :{' '}
+                                          {moment(estate.updatedAt).format(
+                                             'DD-MM-YYYY HH:mm'
+                                          )}
+                                       </Text>
+                                    )}
+                                    <Divider my="2" />
+                                 </>
                               )}
                               {async && (
-                                 <Radio.Group defaultValue="1">
-                                    <Radio
-                                       value="Đang sử dụng"
-                                       my={1}
-                                       onPress={() => setStatus('Đang sử dụng')}
-                                    >
-                                       Đang sử dụng
-                                    </Radio>
-                                    <Radio
-                                       value="Hư hỏng"
-                                       my={1}
-                                       onPress={() => setStatus('Hư hỏng')}
-                                    >
-                                       Hư hỏng
-                                    </Radio>
-                                    <Radio
-                                       value="Đã mất"
-                                       my={1}
-                                       onPress={() => setStatus('Đã mất')}
-                                    >
-                                       Đã mất
-                                    </Radio>
-                                 </Radio.Group>
+                                 <>
+                                    <Text fontSize="md">
+                                       Cập nhập trạng thái
+                                    </Text>
+                                    <Radio.Group defaultValue="1">
+                                       <Radio
+                                          value="Đang sử dụng"
+                                          my={1}
+                                          onPress={() =>
+                                             setStatus('Đang sử dụng')
+                                          }
+                                       >
+                                          Đang sử dụng
+                                       </Radio>
+                                       <Radio
+                                          value="Hư hỏng xin thanh lý"
+                                          my={1}
+                                          onPress={() =>
+                                             setStatus('Hư hỏng xin thanh lý')
+                                          }
+                                       >
+                                          Hư hỏng xin thanh lý
+                                       </Radio>
+                                       <Radio
+                                          value="Hư hỏng chờ sửa chữa"
+                                          my={1}
+                                          onPress={() =>
+                                             setStatus('Hư hỏng chờ sửa chữa')
+                                          }
+                                       >
+                                          Hư hỏng chờ sửa chữa
+                                       </Radio>
+                                       <Radio
+                                          value="Không nhu cầu sử dụng"
+                                          my={1}
+                                          onPress={() =>
+                                             setStatus('Không nhu cầu sử dụng')
+                                          }
+                                       >
+                                          Không nhu cầu sử dụng
+                                       </Radio>
+                                    </Radio.Group>
+                                 </>
                               )}
-                              {successRadio ? (
-                                 <Text fontSize="md" color="#28A745">
-                                    {successRadio}
-                                 </Text>
-                              ) : null}
-                              {errRadio ? (
-                                 <Text fontSize="md" color="#DC3545">
-                                    {errRadio}
-                                 </Text>
-                              ) : null}
                            </View>
                         )}
                      </View>
@@ -406,15 +648,14 @@ const styles = StyleSheet.create({
    barcodebox: {
       alignItems: 'center',
       justifyContent: 'center',
-      height: 300,
-      width: 300,
+      height: 400,
+      width: 400,
       overflow: 'hidden',
       borderRadius: 30,
-      backgroundColor: 'tomato',
    },
    maintext: {
-      fontSize: 20,
-      margin: 20,
+      fontSize: 16,
+      margin: 5,
    },
 });
 
