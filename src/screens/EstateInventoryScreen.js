@@ -15,7 +15,6 @@ import {
    Spinner,
 } from 'native-base';
 import { StyleSheet, FlatList } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EstateInventoryScreen = () => {
    const [render, setRender] = useState(false);

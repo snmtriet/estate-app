@@ -17,7 +17,6 @@ import {
    useToast,
    Divider,
    Alert,
-   Menu,
 } from 'native-base';
 
 import { View, StyleSheet, ScrollView, FlatList } from 'react-native';
@@ -26,6 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Context as AuthContext } from '../context/AuthContext';
 import estateApi from '../api/estate';
 import { Feather } from '@expo/vector-icons';
+import { Menu, MenuItem, MenuDivider } from 'react-native-material-menu';
 
 const EstateCreateScreen = () => {
    const [isOpen, setIsOpen] = useState(false);
@@ -46,7 +46,7 @@ const EstateCreateScreen = () => {
    const [showSuccess, setShowSuccess] = useState(false);
    const [arrayUniqueByKey, setArrayUniqueByKey] = useState([]);
    const [dataCategory, setDataCategory] = useState([]);
-   let [category, setCategory] = useState('');
+   const [visible, setVisible] = useState(false);
 
    useEffect(() => {
       if (state.errMessageChangePassword) {
@@ -257,17 +257,25 @@ const EstateCreateScreen = () => {
                }
             })
             .then((arrayUniqueByKey) => {
-               const b = arrayUniqueByKey.map((item) => {
-                  return item.category;
-               });
-               const arrCategoryUnique = [
-                  ...new Map(b.map((item) => [item['_id'], item])).values(),
-               ];
-               setDataCategory(arrCategoryUnique);
-               setDataScanned(arrayUniqueByKey);
-               setArrayUniqueByKey(arrayUniqueByKey);
-               setLoading(false);
-               setRender(true);
+               if (arrayUniqueByKey) {
+                  const b = arrayUniqueByKey.map((item) => {
+                     return item.category;
+                  });
+                  const arrCategoryUnique = [
+                     ...new Map(b.map((item) => [item['_id'], item])).values(),
+                  ];
+                  setDataCategory(arrCategoryUnique);
+                  setDataScanned(arrayUniqueByKey);
+                  setArrayUniqueByKey(arrayUniqueByKey);
+                  setLoading(false);
+                  setRender(true);
+               } else {
+                  setDataCategory([]);
+                  setArrayUniqueByKey([]);
+                  setDataScanned([]);
+                  setLoading(false);
+                  setRender(true);
+               }
             })
             .catch((err) => console.log(err));
       };
@@ -324,33 +332,30 @@ const EstateCreateScreen = () => {
                      {dataScanned && dataScanned.length !== 0 && (
                         <Flex direction="row" justifyContent="space-between">
                            <Menu
-                              w={200}
-                              trigger={(triggerProps) => {
-                                 return (
-                                    <Button {...triggerProps}>
-                                       Filter categories
-                                    </Button>
-                                 );
-                              }}
+                              visible={visible}
+                              anchor={
+                                 <Button onPress={() => setVisible(true)}>
+                                    Filters
+                                 </Button>
+                              }
+                              onRequestClose={() => setVisible(false)}
                            >
-                              <Menu.OptionGroup title="Categories" type="radio">
-                                 <Menu.ItemOption
-                                    key={'all'}
-                                    value={'All'}
-                                    onPress={async () => {
-                                       setDataScanned(arrayUniqueByKey);
-                                    }}
-                                 >
-                                    All
-                                 </Menu.ItemOption>
-
-                                 {dataCategory.map((item) => {
-                                    return (
-                                       <Menu.ItemOption
-                                          key={item._id}
-                                          value={item._id}
-                                          onPress={() => {
-                                             const b = arrayUniqueByKey.filter(
+                              <MenuItem
+                                 onPress={() => {
+                                    setVisible(false);
+                                    setDataScanned(arrayUniqueByKey);
+                                 }}
+                              >
+                                 All
+                              </MenuItem>
+                              <MenuDivider />
+                              {dataCategory.map((item) => {
+                                 return (
+                                    <MenuItem
+                                       key={item._id}
+                                       onPress={() => {
+                                          const filterCat =
+                                             arrayUniqueByKey.filter(
                                                 (item2) => {
                                                    return (
                                                       item2.category.name ===
@@ -358,14 +363,14 @@ const EstateCreateScreen = () => {
                                                    );
                                                 }
                                              );
-                                             setDataScanned(b);
-                                          }}
-                                       >
-                                          {item.name}
-                                       </Menu.ItemOption>
-                                    );
-                                 })}
-                              </Menu.OptionGroup>
+                                          setDataScanned(filterCat);
+                                          setVisible(false);
+                                       }}
+                                    >
+                                       {item.name}
+                                    </MenuItem>
+                                 );
+                              })}
                            </Menu>
                            <Button
                               ml={2}
