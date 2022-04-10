@@ -172,16 +172,7 @@ const AccountScreen = ({ navigation }) => {
    );
 };
 
-const styles = StyleSheet.create({
-   backCover: {
-      position: 'relative',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-      backgroundColor: 'rgb(0, 0, 0)',
-   },
-});
+const styles = StyleSheet.create({});
 
 export default () => {
    return (

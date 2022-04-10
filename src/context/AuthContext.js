@@ -2,6 +2,7 @@ import createDataContext from './createDataContext';
 import estateApi from '../api/estate';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { navigate } from '../navigationRef';
+import { FACULTY_ID } from '@env';
 
 const authReducer = (state, action) => {
    switch (action.type) {
@@ -79,7 +80,7 @@ const signup =
          const response = await estateApi.post('/users/signup', {
             fullname,
             email,
-            faculty: '6229da9cea2aa2a176e775b0',
+            faculty: FACULTY_ID,
             password,
             passwordConfirm,
          });
@@ -215,7 +216,7 @@ const changePassword =
 const updateMe =
    (dispatch) =>
    async ({ fullname, age, phone }) => {
-      console.log('🍕 ~ fullname, age, phone', fullname, age, phone);
+      // console.log('🍕 ~ fullname, age, phone', fullname, age, phone);
       const token = await AsyncStorage.getItem('token');
       var params;
       if (fullname && !age && !phone) {

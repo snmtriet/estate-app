@@ -22,7 +22,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { NavigationEvents } from 'react-navigation';
 
-const loginValidationSchema = yup.object().shape({
+const signupValidationSchema = yup.object().shape({
    fullname: yup
       .string()
       .required('Fullname is required')
@@ -53,7 +53,7 @@ const SignupScreen = ({ navigation }) => {
          <View style={styles.container}>
             <NavigationEvents onWillBlur={clearErrMessage} />
             <Formik
-               validationSchema={loginValidationSchema}
+               validationSchema={signupValidationSchema}
                initialValues={{
                   fullname: '',
                   email: '',
