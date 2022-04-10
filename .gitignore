@@ -2,13 +2,17 @@ node_modules/
 .expo/
 dist/
 npm-debug.*
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
 *.orig.*
-*.env
 web-build/
 
 # macOS
