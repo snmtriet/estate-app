@@ -32,7 +32,7 @@ const EstateCreateScreen = () => {
    const toast = useToast();
    const cancelRef = useRef(null);
 
-   const { exportToExcel, state } = useContext(AuthContext);
+   const { exportToExcel, state, theme } = useContext(AuthContext);
    const [hasPermission, setHasPermission] = useState(null);
    const [scanned, setScanned] = useState(false);
    const [data, setData] = useState('');

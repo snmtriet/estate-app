@@ -17,6 +17,7 @@ import {
    Alert,
    HStack,
    WarningOutlineIcon,
+   Spinner,
 } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NavigationEvents } from 'react-navigation';
@@ -40,11 +41,12 @@ const updateUserSchema = yup.object().shape({
       .max(200, ({ max }) => `age cannot more than ${max} years old`),
 });
 
-const ChangePasswordScreen = ({ navigation }) => {
+const ChangeInfoScreen = ({ navigation }) => {
    const { updateMe, state, clearErrMessage } = useContext(Context);
    const [showSuccess, setShowSuccess] = useState(false);
    const [showErr, setShowErr] = useState(false);
    const [user, setUser] = useState({});
+   const [loading, setLoading] = useState(true);
 
    useEffect(() => {
       if (state.errMessageUpdateMe) {
@@ -58,7 +60,7 @@ const ChangePasswordScreen = ({ navigation }) => {
    }, [state.errMessageUpdateMe, state.successMessageUpdateMe]);
 
    useEffect(() => {
-      let isMounted = false;
+      var isMounted = false;
       const getData = async () => {
          const token = await AsyncStorage.getItem('token');
          await AsyncStorage.getItem('currentUser').then(async (id) => {
@@ -68,8 +70,11 @@ const ChangePasswordScreen = ({ navigation }) => {
                      Authorization: `Bearer ${token}`,
                   },
                });
-               setUser(user.data.data.user);
-               isMounted = true;
+               if (user) {
+                  setUser(user.data.data.user);
+                  isMounted = true;
+                  setLoading(false);
+               }
             } catch (error) {
                console.log(error.response.data.message);
             }
@@ -77,6 +82,7 @@ const ChangePasswordScreen = ({ navigation }) => {
       };
       getData();
       return () => {
+         setUser({});
          isMounted = false;
       };
    }, []);
@@ -123,13 +129,16 @@ const ChangePasswordScreen = ({ navigation }) => {
                               <NavLink routeName="mainFlow" text="Go back" />
                            </Heading>
                         </TouchableOpacity>
+
                         <VStack space={3} mt="20">
                            <FormControl>
                               <FormControl.Label>Fullname</FormControl.Label>
                               <Input
                                  padding={{ base: '2', md: '5' }}
                                  type="text"
-                                 defaultValue={user.fullname}
+                                 defaultValue={
+                                    loading ? 'loading...' : user.fullname
+                                 }
                                  placeholder="Fullname"
                                  onChangeText={handleChange('fullname')}
                                  onBlur={handleBlur('fullname')}
@@ -152,7 +161,9 @@ const ChangePasswordScreen = ({ navigation }) => {
                               <Input
                                  padding={{ base: '2', md: '5' }}
                                  type="text"
-                                 defaultValue={user.age}
+                                 defaultValue={
+                                    loading ? 'loading...' : user.age
+                                 }
                                  placeholder="Age"
                                  onChangeText={handleChange('age')}
                                  onBlur={handleBlur('age')}
@@ -175,7 +186,9 @@ const ChangePasswordScreen = ({ navigation }) => {
                               <Input
                                  padding={{ base: '2', md: '5' }}
                                  type="text"
-                                 defaultValue={user.phone}
+                                 defaultValue={
+                                    loading ? 'loading...' : user.phone
+                                 }
                                  placeholder="Phone"
                                  onChangeText={handleChange('phone')}
                                  onBlur={handleBlur('phone')}
@@ -266,7 +279,7 @@ export default () => {
    return (
       <NativeBaseProvider>
          <Center flex={1} px="3">
-            <ChangePasswordScreen />
+            <ChangeInfoScreen />
          </Center>
       </NativeBaseProvider>
    );

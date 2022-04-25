@@ -28,6 +28,9 @@ const EstateInventoryScreen = () => {
          setLoading(false);
       };
       getDataInventory();
+      return () => {
+         setDataInventory([]);
+      };
    }, [render]);
 
    return (
@@ -81,7 +84,7 @@ const EstateInventoryScreen = () => {
                                  color="coolGray.600"
                                  bold
                               >
-                                 - Họ và tên: {item.user.fullname}
+                                 - User: {item.user.fullname}
                               </Text>
                               <Text
                                  _dark={{
@@ -134,6 +137,15 @@ const EstateInventoryScreen = () => {
                                        bold
                                     >
                                        - Loại tài sản : {item.name}
+                                    </Text>
+                                    <Text
+                                       _dark={{
+                                          color: 'warmGray.50',
+                                       }}
+                                       color="coolGray.600"
+                                       bold
+                                    >
+                                       - Mô tả : {item.describe}
                                     </Text>
                                     <Text
                                        color="coolGray.600"

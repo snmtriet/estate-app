@@ -148,27 +148,37 @@ const exportToExcel = (dispatch) => async () => {
    const objIds = JSON.parse([arrIds]);
    const uniqueObjIds = objIds.filter(onlyUnique);
 
-   // export
-   if (uniqueObjIds) {
-      await estateApi
-         .post(
-            '/inventories',
-            {
-               user,
-               checkList: uniqueObjIds,
-            },
-            {
-               headers: {
-                  Authorization: `Bearer ${token}`,
+   //loop && find category by Id
+   let categoriesArr = Promise.all(
+      uniqueObjIds.map(async (categoryId) => {
+         let category = await estateApi.get(`/categories/${categoryId}`);
+         category = { ...category.data.data.category };
+         return category;
+      })
+   );
+   categoriesArr.then(async (data) => {
+      // export
+      if (uniqueObjIds) {
+         await estateApi
+            .post(
+               '/inventories',
+               {
+                  user,
+                  checkList: data,
                },
-            }
-         )
-         .then(async (response) => {
-            await AsyncStorage.removeItem('saveIdsCategory');
-            await AsyncStorage.removeItem('dataScanned');
-         })
-         .catch((err) => console.log(err.response.data.message));
-   }
+               {
+                  headers: {
+                     Authorization: `Bearer ${token}`,
+                  },
+               }
+            )
+            .then(async (response) => {
+               await AsyncStorage.removeItem('saveIdsCategory');
+               await AsyncStorage.removeItem('dataScanned');
+            })
+            .catch((err) => console.log(err.response.data.message));
+      }
+   });
 };
 
 const changePassword =
