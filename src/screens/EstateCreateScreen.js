@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
+import { Dimensions } from 'react-native';
 import moment from 'moment';
 import {
    AlertDialog,
@@ -747,25 +748,9 @@ const EstateCreateScreen = () => {
                      )}
                   </Box>
 
-                  <View
-                     style={{
-                        flexDirection: 'row',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        position: 'absolute',
-                        bottom: 5,
-                        left: '45%',
-                     }}
-                  >
+                  <View style={styles.centerBtnQR}>
                      <Button
-                        style={{
-                           width: 60,
-                           height: 60,
-                           borderRadius: '50%',
-                           display: 'flex',
-                           justifyContent: 'center',
-                           alignItems: 'center',
-                        }}
+                        style={styles.btnQR}
                         onPress={() => {
                            setHasPermission(true);
                            setIsOpen(!isOpen);
@@ -930,6 +915,27 @@ const styles = StyleSheet.create({
       width: 400,
       overflow: 'hidden',
       borderRadius: 30,
+   },
+   centerBtnQR: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'absolute',
+      bottom: 2,
+      right: '50%',
+      transform: [
+         {
+            translateX: Dimensions.get('window').width / 12,
+         },
+      ],
+   },
+   btnQR: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 60,
+      height: 60,
+      borderRadius: 60 / 2,
    },
    maintext: {
       fontSize: 16,
