@@ -28,6 +28,7 @@ const AccountScreen = ({ navigation }) => {
    const handleSignout = async () => {
       await AsyncStorage.removeItem('dataScanned');
       await AsyncStorage.removeItem('currentUser');
+      await AsyncStorage.removeItem('dataUnScanned');
       signout();
    };
 

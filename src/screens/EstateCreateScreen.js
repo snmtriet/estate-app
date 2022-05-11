@@ -24,7 +24,7 @@ import { BarCodeScanner } from 'expo-barcode-scanner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Context as AuthContext } from '../context/AuthContext';
 import estateApi from '../api/estate';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome } from '@expo/vector-icons';
 import { Menu, MenuItem, MenuDivider } from 'react-native-material-menu';
 
 const EstateCreateScreen = () => {
@@ -46,7 +46,25 @@ const EstateCreateScreen = () => {
    const [showSuccess, setShowSuccess] = useState(false);
    const [arrayUniqueByKey, setArrayUniqueByKey] = useState([]);
    const [dataCategory, setDataCategory] = useState([]);
+   const [dataCategoryUnScan, setDataCategoryUnScan] = useState([]);
    const [visible, setVisible] = useState(false);
+   const [visibleDataUnScan, setVisibleDataUnScan] = useState(false);
+   const [estatedData, setEstateData] = useState([]);
+   const [estateUnscanned, setEstateUnscanned] = useState([]);
+   const [estateUnscannedVirtual, setEstateUnscannedVirtual] = useState([]);
+
+   useEffect(() => {
+      const getData = async () => {
+         const token = await AsyncStorage.getItem('token');
+         const data = await estateApi.get('/estates', {
+            headers: {
+               Authorization: `Bearer ${token}`,
+            },
+         });
+         setEstateData(data.data.data.estates);
+      };
+      getData();
+   }, []);
 
    useEffect(() => {
       if (state.errMessageChangePassword) {
@@ -68,6 +86,14 @@ const EstateCreateScreen = () => {
          setShowSuccess(true);
       }
    }, [state.errMessageChangePassword, state.successMessageUpdateMe]);
+
+   function getDifference(array1, array2) {
+      return array1.filter((object1) => {
+         return !array2.some((object2) => {
+            return object1._id === object2._id;
+         });
+      });
+   }
 
    const handleUpdateEstate = async (data, status) => {
       if (!status) {
@@ -113,6 +139,33 @@ const EstateCreateScreen = () => {
                         );
                      }
                   });
+                  await AsyncStorage.getItem(
+                     'dataUnScanned',
+                     async (err, result) => {
+                        console.log('🍕 ~ result', JSON.parse(result));
+                        let dataScan = await AsyncStorage.getItem(
+                           'dataScanned'
+                        );
+                        dataScan = JSON.parse(dataScan);
+                        const getDataUnScan = getDifference(
+                           estatedData,
+                           dataScan
+                        );
+                        if (result !== null) {
+                           // console.log('🍕 ~ result !== null', getDataUnScan);
+                           AsyncStorage.setItem(
+                              'dataUnScanned',
+                              JSON.stringify(getDataUnScan)
+                           );
+                        } else {
+                           // console.log('🍕 ~ result === null', getDataUnScan);
+                           AsyncStorage.setItem(
+                              'dataUnScanned',
+                              JSON.stringify(getDataUnScan)
+                           );
+                        }
+                     }
+                  );
                   await AsyncStorage.getItem(
                      'saveIdsCategory',
                      (err, result) => {
@@ -243,6 +296,32 @@ const EstateCreateScreen = () => {
 
    useEffect(() => {
       const getData = async () => {
+         await AsyncStorage.getItem('dataUnScanned').then((data) => {
+            if (data) {
+               data = JSON.parse(data);
+               // console.log('🍕 ~ data', data);
+               const arrCate = data.map((item) => {
+                  return item.category;
+               });
+               const arrCategoryUnScanUnique = [
+                  ...new Map(
+                     arrCate.map((item) => [item['_id'], item])
+                  ).values(),
+               ];
+               // console.log('🍕 ~ arrCategoryUnScan', arrCategoryUnScanUnique);
+               setDataCategoryUnScan(arrCategoryUnScanUnique);
+               setEstateUnscanned(data);
+               setEstateUnscannedVirtual(data);
+               // console.log('🍕 ~ data scanned', data);
+               setLoading(false);
+               setRender(true);
+            } else {
+               setDataCategoryUnScan([]);
+               setEstateUnscanned([]);
+               setLoading(false);
+               setRender(true);
+            }
+         });
          await AsyncStorage.getItem('dataScanned')
             .then((data) => {
                if (data) {
@@ -256,16 +335,20 @@ const EstateCreateScreen = () => {
                   return arrayUniqueByKey;
                }
             })
-            .then((arrayUniqueByKey) => {
+            .then(async (arrayUniqueByKey) => {
                if (arrayUniqueByKey) {
-                  const b = arrayUniqueByKey.map((item) => {
+                  const arrCate = arrayUniqueByKey.map((item) => {
                      return item.category;
                   });
                   const arrCategoryUnique = [
-                     ...new Map(b.map((item) => [item['_id'], item])).values(),
+                     ...new Map(
+                        arrCate.map((item) => [item['_id'], item])
+                     ).values(),
                   ];
                   setDataCategory(arrCategoryUnique);
+                  // console.log('🍕 ~ arrCategoryUnique', arrCategoryUnique);
                   setDataScanned(arrayUniqueByKey);
+                  // console.log('🍕 ~ data scanned', arrayUniqueByKey);
                   setArrayUniqueByKey(arrayUniqueByKey);
                   setLoading(false);
                   setRender(true);
@@ -283,6 +366,28 @@ const EstateCreateScreen = () => {
       getData();
    }, [render]);
 
+   const checkExport = async () => {
+      if (estateUnscanned.length === 0) {
+         exportToExcel();
+         setDataScanned([]);
+         toast.show({
+            title: 'Export success',
+            description: 'Xuất thành công!',
+            placement: 'top',
+            status: 'success',
+            duration: 2000,
+         });
+      } else {
+         toast.show({
+            title: 'Export warning',
+            description: 'Bạn chưa quét hết tài sản!',
+            placement: 'top',
+            status: 'warning',
+            duration: 2000,
+         });
+      }
+   };
+
    const handleBarCodeScanned = ({ type, data }) => {
       setScanned(true);
       setData(data);
@@ -298,7 +403,13 @@ const EstateCreateScreen = () => {
    }
    if (hasPermission === false) {
       return (
-         <Flex bg="#F2F2F2" flex={1} direction="row" safeAreaTop="5">
+         <Flex
+            bg="#F2F2F2"
+            flex={1}
+            direction="row"
+            safeAreaTop="5"
+            bgColor="red"
+         >
             {loading ? (
                <View style={{ flex: 1 }}>
                   <Flex direction="row" justifyContent="space-between" p={2}>
@@ -317,154 +428,117 @@ const EstateCreateScreen = () => {
                </View>
             ) : (
                <View style={{ flex: 1 }}>
-                  <Flex direction="row" justifyContent="space-between" p={2}>
-                     <Heading
-                        size="md"
-                        color="coolGray.600"
-                        _dark={{
-                           color: 'warmGray.200',
-                        }}
-                        bold
-                        mb={2}
-                     >
-                        Đã quét: {dataScanned ? dataScanned.length : 0}
-                     </Heading>
-                     {dataScanned && dataScanned.length !== 0 && (
-                        <Flex direction="row" justifyContent="space-between">
-                           <Menu
-                              visible={visible}
-                              anchor={
-                                 <Button onPress={() => setVisible(true)}>
-                                    Filters
-                                 </Button>
-                              }
-                              onRequestClose={() => setVisible(false)}
-                           >
-                              <MenuItem
-                                 onPress={() => {
-                                    setVisible(false);
-                                    setDataScanned(arrayUniqueByKey);
-                                 }}
+                  <Box bgColor={'green.100'} height={'50%'}>
+                     <Flex direction="row" justifyContent="space-between" p={2}>
+                        <Heading
+                           size="md"
+                           color="coolGray.600"
+                           _dark={{
+                              color: 'warmGray.200',
+                           }}
+                           bold
+                           mb={2}
+                        >
+                           Đã quét: {dataScanned ? dataScanned.length : 0}
+                        </Heading>
+                        {dataScanned && dataScanned.length !== 0 && (
+                           <Flex direction="row" justifyContent="space-between">
+                              <Menu
+                                 visible={visible}
+                                 anchor={
+                                    <Button onPress={() => setVisible(true)}>
+                                       Filters
+                                    </Button>
+                                 }
+                                 onRequestClose={() => setVisible(false)}
                               >
-                                 All
-                              </MenuItem>
-                              <MenuDivider />
-                              {dataCategory.map((item) => {
-                                 return (
-                                    <MenuItem
-                                       key={item._id}
-                                       onPress={() => {
-                                          const filterCat =
-                                             arrayUniqueByKey.filter(
-                                                (item2) => {
-                                                   return (
-                                                      item2.category.name ===
-                                                      item.name
-                                                   );
-                                                }
-                                             );
-                                          setDataScanned(filterCat);
-                                          setVisible(false);
+                                 <MenuItem
+                                    onPress={() => {
+                                       setVisible(false);
+                                       setDataScanned(arrayUniqueByKey);
+                                    }}
+                                 >
+                                    All
+                                 </MenuItem>
+                                 <MenuDivider />
+                                 {dataCategory.map((item) => {
+                                    return (
+                                       <MenuItem
+                                          key={item._id}
+                                          onPress={() => {
+                                             const filterCat =
+                                                arrayUniqueByKey.filter(
+                                                   (item2) => {
+                                                      return (
+                                                         item2.category.name ===
+                                                         item.name
+                                                      );
+                                                   }
+                                                );
+                                             setDataScanned(filterCat);
+                                             setVisible(false);
+                                          }}
+                                       >
+                                          {item.name}
+                                       </MenuItem>
+                                    );
+                                 })}
+                              </Menu>
+                              <Button ml={2} onPress={checkExport}>
+                                 Export
+                              </Button>
+                           </Flex>
+                        )}
+                     </Flex>
+                     {showErr && (
+                        <Center>
+                           <Alert w="100%" status="error" mt="4">
+                              <VStack space={2} flexShrink={1} w="80%">
+                                 <HStack
+                                    flexShrink={1}
+                                    space={2}
+                                    justifyContent="space-between"
+                                 >
+                                    <HStack space={2} flexShrink={1}>
+                                       <Alert.Icon mt="1" />
+                                       <Text fontSize="md" color="coolGray.800">
+                                          {state.errMessageChangePassword}
+                                       </Text>
+                                    </HStack>
+                                 </HStack>
+                              </VStack>
+                           </Alert>
+                        </Center>
+                     )}
+                     <FlatList
+                        nestedScrollEnabled
+                        data={dataScanned}
+                        renderItem={({ item }) => (
+                           <Box
+                              borderBottomWidth="1"
+                              _dark={{
+                                 borderColor: 'gray.600',
+                              }}
+                              borderColor="coolGray.200"
+                           >
+                              <HStack space={3} justifyContent="space-evenly">
+                                 <Center ml={'0.5'}>
+                                    <Feather
+                                       name="check-circle"
+                                       size={25}
+                                       color="#28A745"
+                                    />
+                                 </Center>
+                                 <VStack>
+                                    <Text
+                                       _dark={{
+                                          color: 'warmGray.50',
                                        }}
+                                       color="coolGray.600"
+                                       bold
                                     >
                                        {item.name}
-                                    </MenuItem>
-                                 );
-                              })}
-                           </Menu>
-                           <Button
-                              ml={2}
-                              onPress={async () => {
-                                 exportToExcel();
-                                 setDataScanned([]);
-                                 toast.show({
-                                    title: 'Export success',
-                                    description: 'Xuất thành công!',
-                                    placement: 'top',
-                                    status: 'success',
-                                    duration: 2000,
-                                 });
-                              }}
-                           >
-                              Export
-                           </Button>
-                        </Flex>
-                     )}
-                  </Flex>
-                  {showErr && (
-                     <Center>
-                        <Alert w="100%" status="error" mt="4">
-                           <VStack space={2} flexShrink={1} w="80%">
-                              <HStack
-                                 flexShrink={1}
-                                 space={2}
-                                 justifyContent="space-between"
-                              >
-                                 <HStack space={2} flexShrink={1}>
-                                    <Alert.Icon mt="1" />
-                                    <Text fontSize="md" color="coolGray.800">
-                                       {state.errMessageChangePassword}
                                     </Text>
-                                 </HStack>
-                              </HStack>
-                           </VStack>
-                        </Alert>
-                     </Center>
-                  )}
-
-                  <FlatList
-                     data={dataScanned}
-                     renderItem={({ item }) => (
-                        <Box
-                           borderBottomWidth="1"
-                           _dark={{
-                              borderColor: 'gray.600',
-                           }}
-                           borderColor="coolGray.200"
-                        >
-                           <HStack space={3} justifyContent="space-evenly">
-                              <Center ml={'0.5'}>
-                                 <Feather
-                                    name="check-circle"
-                                    size={25}
-                                    color="#28A745"
-                                 />
-                              </Center>
-                              <VStack>
-                                 <Text
-                                    _dark={{
-                                       color: 'warmGray.50',
-                                    }}
-                                    color="coolGray.600"
-                                    bold
-                                 >
-                                    {item.name}
-                                 </Text>
-                                 <Text
-                                    color="coolGray.600"
-                                    _dark={{
-                                       color: 'warmGray.200',
-                                    }}
-                                    bold
-                                 >
-                                    {item.status}
-                                 </Text>
-                              </VStack>
-                              <Spacer />
-                              <VStack w={'45%'}>
-                                 <Text
-                                    color="coolGray.600"
-                                    _dark={{
-                                       color: 'warmGray.200',
-                                    }}
-                                    bold
-                                 >
-                                    Ngày tạo:{' '}
-                                    {moment(item.createdAt).format(
-                                       'DD-MM-YYYY'
-                                    )}
-                                 </Text>
-                                 {item.updatedAt && (
                                     <Text
                                        color="coolGray.600"
                                        _dark={{
@@ -472,27 +546,226 @@ const EstateCreateScreen = () => {
                                        }}
                                        bold
                                     >
-                                       Lần kiểm gần đây:{' '}
-                                       {moment(item.updatedAt).format(
-                                          'HH:mm:ss'
+                                       {item.status}
+                                    </Text>
+                                 </VStack>
+                                 <Spacer />
+                                 <VStack w={'45%'}>
+                                    <Text
+                                       color="coolGray.600"
+                                       _dark={{
+                                          color: 'warmGray.200',
+                                       }}
+                                       bold
+                                    >
+                                       Ngày tạo:{' '}
+                                       {moment(item.createdAt).format(
+                                          'DD-MM-YYYY'
                                        )}
                                     </Text>
-                                 )}
-                              </VStack>
-                           </HStack>
-                        </Box>
+                                    {item.updatedAt && (
+                                       <Text
+                                          color="coolGray.600"
+                                          _dark={{
+                                             color: 'warmGray.200',
+                                          }}
+                                          bold
+                                       >
+                                          Lần kiểm gần đây:{' '}
+                                          {moment(item.updatedAt).format(
+                                             'HH:mm:ss'
+                                          )}
+                                       </Text>
+                                    )}
+                                 </VStack>
+                              </HStack>
+                           </Box>
+                        )}
+                        keyExtractor={(item) => item._id}
+                     />
+                  </Box>
+                  {/* divide */}
+                  <Box height={'50%'} bgColor={'red.100'} pb={100}>
+                     {estateUnscanned && estateUnscanned.length !== 0 && (
+                        <View>
+                           <Flex
+                              direction="row"
+                              justifyContent="space-between"
+                              p={2}
+                           >
+                              <Heading
+                                 size="md"
+                                 color="coolGray.600"
+                                 _dark={{
+                                    color: 'warmGray.200',
+                                 }}
+                                 bold
+                                 mb={2}
+                              >
+                                 Chưa quét:{' '}
+                                 {estateUnscanned ? estateUnscanned.length : 0}
+                              </Heading>
+                              {estateUnscanned && estateUnscanned.length !== 0 && (
+                                 <Flex
+                                    direction="row"
+                                    justifyContent="flex-end"
+                                    mr={5}
+                                 >
+                                    <Menu
+                                       visible={visibleDataUnScan}
+                                       anchor={
+                                          <Button
+                                             onPress={() =>
+                                                setVisibleDataUnScan(true)
+                                             }
+                                          >
+                                             Filters
+                                          </Button>
+                                       }
+                                       onRequestClose={() =>
+                                          setVisibleDataUnScan(false)
+                                       }
+                                    >
+                                       <MenuItem
+                                          onPress={() => {
+                                             setVisibleDataUnScan(false);
+                                             setEstateUnscanned(
+                                                estateUnscannedVirtual
+                                             );
+                                          }}
+                                       >
+                                          All
+                                       </MenuItem>
+                                       <MenuDivider />
+                                       {dataCategoryUnScan.map((item) => {
+                                          return (
+                                             <MenuItem
+                                                key={item._id}
+                                                onPress={() => {
+                                                   const filterCatUnScan =
+                                                      estateUnscannedVirtual.filter(
+                                                         (item2) => {
+                                                            return (
+                                                               item2.category
+                                                                  .name ===
+                                                               item.name
+                                                            );
+                                                         }
+                                                      );
+                                                   setEstateUnscanned(
+                                                      filterCatUnScan
+                                                   );
+                                                   setVisibleDataUnScan(false);
+                                                }}
+                                             >
+                                                {item.name}
+                                             </MenuItem>
+                                          );
+                                       })}
+                                    </Menu>
+                                 </Flex>
+                              )}
+                           </Flex>
+
+                           <FlatList
+                              nestedScrollEnabled
+                              data={estateUnscanned}
+                              renderItem={({ item }) => (
+                                 <Box
+                                    borderBottomWidth="1"
+                                    _dark={{
+                                       borderColor: 'gray.600',
+                                    }}
+                                    borderColor="coolGray.200"
+                                 >
+                                    <HStack
+                                       space={3}
+                                       justifyContent="space-evenly"
+                                    >
+                                       <Center ml={'0.5'}>
+                                          <FontAwesome
+                                             name="times-circle"
+                                             size={24}
+                                             color="red"
+                                          />
+                                       </Center>
+                                       <VStack>
+                                          <Text
+                                             _dark={{
+                                                color: 'warmGray.50',
+                                             }}
+                                             color="coolGray.600"
+                                             bold
+                                          >
+                                             {item.name}
+                                          </Text>
+                                          <Text
+                                             color="coolGray.600"
+                                             _dark={{
+                                                color: 'warmGray.200',
+                                             }}
+                                             bold
+                                          >
+                                             {item.status}
+                                          </Text>
+                                       </VStack>
+                                       <Spacer />
+                                       <VStack w={'45%'}>
+                                          <Text
+                                             color="coolGray.600"
+                                             _dark={{
+                                                color: 'warmGray.200',
+                                             }}
+                                             bold
+                                          >
+                                             Ngày tạo:{' '}
+                                             {moment(item.createdAt).format(
+                                                'DD-MM-YYYY'
+                                             )}
+                                          </Text>
+                                          {item.updatedAt && (
+                                             <Text
+                                                color="coolGray.600"
+                                                _dark={{
+                                                   color: 'warmGray.200',
+                                                }}
+                                                bold
+                                             >
+                                                Lần kiểm gần đây:{' '}
+                                                {moment(item.updatedAt).format(
+                                                   'HH:mm:ss'
+                                                )}
+                                             </Text>
+                                          )}
+                                       </VStack>
+                                    </HStack>
+                                 </Box>
+                              )}
+                              keyExtractor={(item) => item._id}
+                           />
+                        </View>
                      )}
-                     keyExtractor={(item) => item._id}
-                  />
+                  </Box>
+
                   <View
                      style={{
                         flexDirection: 'row',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        marginBottom: '10%',
+                        position: 'absolute',
+                        bottom: 5,
+                        left: '45%',
                      }}
                   >
                      <Button
+                        style={{
+                           width: 60,
+                           height: 60,
+                           borderRadius: '50%',
+                           display: 'flex',
+                           justifyContent: 'center',
+                           alignItems: 'center',
+                        }}
                         onPress={() => {
                            setHasPermission(true);
                            setIsOpen(!isOpen);
@@ -500,7 +773,7 @@ const EstateCreateScreen = () => {
                         }}
                         disabled={showErr}
                      >
-                        Kiểm kê
+                        QR
                      </Button>
                   </View>
                </View>
