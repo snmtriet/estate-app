@@ -43,6 +43,7 @@ const EstateCreateScreen = () => {
    const [async, setAsync] = useState(false);
    const [render, setRender] = useState(false);
    const [loading, setLoading] = useState(true);
+   const [loadingBtn, setLoadingBtn] = useState(false);
    const [showErr, setShowErr] = useState(false);
    const [showSuccess, setShowSuccess] = useState(false);
    const [arrayUniqueByKey, setArrayUniqueByKey] = useState([]);
@@ -111,6 +112,7 @@ const EstateCreateScreen = () => {
       } else {
          try {
             const token = await AsyncStorage.getItem('token');
+            setLoadingBtn(true);
             await estateApi
                .patch(
                   `/estates/${data}`,
@@ -260,6 +262,7 @@ const EstateCreateScreen = () => {
             handleScanAgain();
             onClose();
             setRender(false);
+            setLoadingBtn(false);
             if (!showErr && showSuccess) {
                toast.show({
                   title: 'Save success',
@@ -270,6 +273,7 @@ const EstateCreateScreen = () => {
                });
             }
          } catch (error) {
+            setLoadingBtn(false);
             console.log(error.response.data.message);
             toast.show({
                title: 'Authorization error',
@@ -574,7 +578,7 @@ const EstateCreateScreen = () => {
                                        >
                                           Lần kiểm gần đây:{' '}
                                           {moment(item.updatedAt).format(
-                                             'HH:mm:ss'
+                                             'DD-MM-YYYY HH:mm'
                                           )}
                                        </Text>
                                     )}
@@ -734,7 +738,7 @@ const EstateCreateScreen = () => {
                                              >
                                                 Lần kiểm gần đây:{' '}
                                                 {moment(item.updatedAt).format(
-                                                   'HH:mm:ss'
+                                                   'DD-MM-YYYY HH:mm'
                                                 )}
                                              </Text>
                                           )}
@@ -885,14 +889,30 @@ const EstateCreateScreen = () => {
                      >
                         Cancel
                      </Button>
-                     <Button
-                        bg={'primary.400'}
-                        onPress={() => {
-                           handleUpdateEstate(data, status);
-                        }}
-                     >
-                        Lưu
-                     </Button>
+                     {!loadingBtn ? (
+                        <Button
+                           bg={'primary.400'}
+                           onPress={() => {
+                              handleUpdateEstate(data, status);
+                           }}
+                        >
+                           Lưu
+                        </Button>
+                     ) : (
+                        <Button
+                           isLoading
+                           _loading={{
+                              bg: 'primary.400:alpha.70',
+                              _text: {
+                                 color: 'black',
+                              },
+                           }}
+                           _spinner={{
+                              color: 'black',
+                           }}
+                           isLoadingText="Đang lưu"
+                        ></Button>
+                     )}
                   </Button.Group>
                </AlertDialog.Footer>
             </AlertDialog.Content>
