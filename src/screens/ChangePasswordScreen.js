@@ -68,6 +68,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                values,
                errors,
                isValid,
+               isSubmitting,
             }) => (
                <>
                   <Center w="100%" mt={40}>
@@ -249,15 +250,31 @@ const ChangePasswordScreen = ({ navigation }) => {
                                  </Alert>
                               )}
                            </FormControl>
-
-                           <Button
-                              mt="2"
-                              colorScheme="indigo"
-                              onPress={handleSubmit}
-                              disabled={!isValid}
-                           >
-                              Update Password
-                           </Button>
+                           {isSubmitting ? (
+                              <Button
+                                 mt="2"
+                                 isLoading
+                                 _loading={{
+                                    bg: 'indigo.600',
+                                    _text: {
+                                       color: 'white',
+                                    },
+                                 }}
+                                 _spinner={{
+                                    color: 'white',
+                                 }}
+                                 isLoadingText="Submiting..."
+                              />
+                           ) : (
+                              <Button
+                                 mt="2"
+                                 colorScheme="indigo"
+                                 onPress={handleSubmit}
+                                 disabled={!isValid}
+                              >
+                                 Update Password
+                              </Button>
+                           )}
                         </VStack>
                      </Box>
                   </Center>

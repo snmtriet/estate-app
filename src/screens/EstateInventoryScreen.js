@@ -5,18 +5,18 @@ import {
    Box,
    Heading,
    HStack,
-   VStack,
    Text,
    Spacer,
-   Center,
    NativeBaseProvider,
    Button,
-   Spinner,
+   VStack,
    Pressable,
    Badge,
    PresenceTransition,
+   FlatList,
+   Skeleton,
 } from 'native-base';
-import { StyleSheet, FlatList, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import moment from 'moment';
 import { NavigationEvents } from 'react-navigation';
 
@@ -75,9 +75,49 @@ const EstateInventoryScreen = () => {
                )}
             </Flex>
             {loading ? (
-               <HStack space={8} justifyContent="center" alignItems="center">
-                  <Spinner size="lg" />
-               </HStack>
+               <Box>
+                  {[1, 2, 3, 4].map((item) => {
+                     return (
+                        <Box key={item} mb={5} ml={5} mr={5}>
+                           <VStack
+                              w="100%"
+                              maxW={Dimensions.get('window').width}
+                              borderWidth="1"
+                              shadow="1"
+                              borderColor="coolGray.300"
+                              space={2}
+                              overflow="hidden"
+                              rounded="md"
+                           >
+                              <HStack>
+                                 <Skeleton
+                                    px="4"
+                                    py="3"
+                                    width="40"
+                                    rounded="full"
+                                    startColor="primary.200"
+                                 />
+                                 <Spacer />
+                                 <Skeleton
+                                    px="4"
+                                    py="3"
+                                    width="40"
+                                    rounded="full"
+                                 />
+                              </HStack>
+                              <Skeleton.Text px="4" width="220" />
+                              <Skeleton
+                                 px="4"
+                                 py="4"
+                                 width="40"
+                                 rounded="md"
+                                 startColor="darkBlue.400"
+                              />
+                           </VStack>
+                        </Box>
+                     );
+                  })}
+               </Box>
             ) : (
                <FlatList
                   data={dataInventory}
@@ -156,7 +196,7 @@ const EstateInventoryScreen = () => {
                                              color="darkBlue.600"
                                              alignSelf="flex-start"
                                           >
-                                             Xem danh sách tài sản đã kiểm
+                                             Xem chi tiết
                                           </Text>
                                        ) : (
                                           <Text
@@ -165,7 +205,7 @@ const EstateInventoryScreen = () => {
                                              fontWeight="medium"
                                              color="darkBlue.600"
                                           >
-                                             Xem danh sách tài sản đã kiểm
+                                             Xem chi tiết
                                           </Text>
                                        )}
                                     </Flex>
@@ -195,6 +235,7 @@ const EstateInventoryScreen = () => {
             >
                <FlatList
                   data={estatesInventories}
+                  contentContainerStyle={{ paddingBottom: 100 }}
                   renderItem={({ item, index }) => (
                      <Box mb={5} ml={5} mr={5}>
                         <Box>
@@ -271,7 +312,7 @@ const styles = StyleSheet.create({
       top: 50,
       width: Dimensions.get('window').width,
       height: Dimensions.get('window').height,
-      backgroundColor: '#a5f3fc',
+      backgroundColor: '#fff',
    },
 });
 

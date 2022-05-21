@@ -52,6 +52,7 @@ const SigninScreen = ({ navigation }) => {
                values,
                errors,
                isValid,
+               isSubmitting,
             }) => (
                <>
                   <Center w="100%">
@@ -183,15 +184,31 @@ const SigninScreen = ({ navigation }) => {
                                  Forget Password?
                               </Link>
                            </FormControl>
-
-                           <Button
-                              mt="2"
-                              colorScheme="indigo"
-                              onPress={handleSubmit}
-                              disabled={!isValid}
-                           >
-                              Sign in
-                           </Button>
+                           {isSubmitting ? (
+                              <Button
+                                 mt="2"
+                                 isLoading
+                                 _loading={{
+                                    bg: 'indigo.600',
+                                    _text: {
+                                       color: 'white',
+                                    },
+                                 }}
+                                 _spinner={{
+                                    color: 'white',
+                                 }}
+                                 isLoadingText="Submiting..."
+                              />
+                           ) : (
+                              <Button
+                                 mt="2"
+                                 colorScheme="indigo"
+                                 onPress={handleSubmit}
+                                 disabled={!isValid}
+                              >
+                                 Sign in
+                              </Button>
+                           )}
                         </VStack>
                      </Box>
                   </Center>

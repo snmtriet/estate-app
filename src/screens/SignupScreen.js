@@ -69,6 +69,7 @@ const SignupScreen = ({ navigation }) => {
                   values,
                   errors,
                   isValid,
+                  isSubmitting,
                }) => (
                   <>
                      <Center w="100%" mt={{ base: '2', md: '5', lg: '10' }}>
@@ -263,15 +264,31 @@ const SignupScreen = ({ navigation }) => {
                                     </Alert>
                                  )}
                               </FormControl>
-
-                              <Button
-                                 mt="2"
-                                 colorScheme="indigo"
-                                 onPress={handleSubmit}
-                                 disabled={!isValid}
-                              >
-                                 Sign up
-                              </Button>
+                              {isSubmitting ? (
+                                 <Button
+                                    mt="2"
+                                    isLoading
+                                    _loading={{
+                                       bg: 'indigo.600',
+                                       _text: {
+                                          color: 'white',
+                                       },
+                                    }}
+                                    _spinner={{
+                                       color: 'white',
+                                    }}
+                                    isLoadingText="Submiting..."
+                                 />
+                              ) : (
+                                 <Button
+                                    mt="2"
+                                    colorScheme="indigo"
+                                    onPress={handleSubmit}
+                                    disabled={!isValid}
+                                 >
+                                    Sign up
+                                 </Button>
+                              )}
                            </VStack>
                         </Box>
                      </Center>

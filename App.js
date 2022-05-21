@@ -52,7 +52,7 @@ const switchNavigator = createSwitchNavigator({
       Create: {
          screen: EstateCreateScreen,
          navigationOptions: {
-            tabBarLabel: 'Quét QR',
+            tabBarLabel: 'QR Code',
             tabBarOptions: {
                activeTintColor: '#18181b',
             },

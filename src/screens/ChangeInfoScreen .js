@@ -105,6 +105,7 @@ const ChangeInfoScreen = ({ navigation }) => {
                values,
                errors,
                isValid,
+               isSubmitting,
             }) => (
                <>
                   <Center w="100%" mt={40}>
@@ -248,15 +249,35 @@ const ChangeInfoScreen = ({ navigation }) => {
                                  </Alert>
                               )}
                            </FormControl>
-
-                           <Button
-                              mt="2"
-                              colorScheme="indigo"
-                              onPress={handleSubmit}
-                              disabled={!isValid}
-                           >
-                              Update User
-                           </Button>
+                           {loading ? (
+                              <Button mt="2" bg="indigo.300" disabled={true}>
+                                 Update User
+                              </Button>
+                           ) : isSubmitting ? (
+                              <Button
+                                 mt="2"
+                                 isLoading
+                                 _loading={{
+                                    bg: 'indigo.600',
+                                    _text: {
+                                       color: 'white',
+                                    },
+                                 }}
+                                 _spinner={{
+                                    color: 'white',
+                                 }}
+                                 isLoadingText="Submiting..."
+                              />
+                           ) : (
+                              <Button
+                                 mt="2"
+                                 colorScheme="indigo"
+                                 onPress={handleSubmit}
+                                 disabled={!isValid}
+                              >
+                                 Update User
+                              </Button>
+                           )}
                         </VStack>
                      </Box>
                   </Center>

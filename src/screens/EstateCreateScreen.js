@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { Dimensions } from 'react-native';
 import moment from 'moment';
 import {
    AlertDialog,
@@ -18,14 +17,15 @@ import {
    useToast,
    Divider,
    Alert,
+   Badge,
+   FlatList,
 } from 'native-base';
 
-import { View, StyleSheet, ScrollView, FlatList } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Context as AuthContext } from '../context/AuthContext';
 import estateApi from '../api/estate';
-import { Feather, FontAwesome } from '@expo/vector-icons';
 import { Menu, MenuItem, MenuDivider } from 'react-native-material-menu';
 
 const EstateCreateScreen = () => {
@@ -54,6 +54,7 @@ const EstateCreateScreen = () => {
    const [estatedData, setEstateData] = useState([]);
    const [estateUnscanned, setEstateUnscanned] = useState([]);
    const [estateUnscannedVirtual, setEstateUnscannedVirtual] = useState([]);
+   const [isOpen2, setIsOpen2] = useState(false);
 
    useEffect(() => {
       const getData = async () => {
@@ -408,13 +409,7 @@ const EstateCreateScreen = () => {
    }
    if (hasPermission === false) {
       return (
-         <Flex
-            bg="#F2F2F2"
-            flex={1}
-            direction="row"
-            safeAreaTop="5"
-            bgColor="red"
-         >
+         <Flex bg="#F2F2F2" flex={1} direction="row" safeAreaTop="5">
             {loading ? (
                <View style={{ flex: 1 }}>
                   <Flex direction="row" justifyContent="space-between" p={2}>
@@ -433,28 +428,81 @@ const EstateCreateScreen = () => {
                </View>
             ) : (
                <View style={{ flex: 1 }}>
-                  <Box bgColor={'green.100'} height={'50%'}>
+                  <Box height={'100%'}>
                      <Flex direction="row" justifyContent="space-between" p={2}>
-                        <Heading
-                           size="md"
-                           color="coolGray.600"
-                           _dark={{
-                              color: 'warmGray.200',
-                           }}
-                           bold
-                           mb={2}
-                        >
-                           Đã quét: {dataScanned ? dataScanned.length : 0}
-                        </Heading>
-                        {dataScanned && dataScanned.length !== 0 && (
+                        <Flex direction="row" justifyContent="space-between">
+                           <VStack mr={5}>
+                              <Badge // bg="red.400"
+                                 colorScheme="danger"
+                                 rounded="full"
+                                 mb={-4}
+                                 mr={-4}
+                                 zIndex={1}
+                                 variant="solid"
+                                 alignSelf="flex-end"
+                                 _text={{
+                                    fontSize: 12,
+                                 }}
+                              >
+                                 {dataScanned ? dataScanned.length : 0}
+                              </Badge>
+                              <Button
+                                 mx={{
+                                    base: 'auto',
+                                    md: 0,
+                                 }}
+                                 p="2"
+                                 _text={{
+                                    fontSize: 12,
+                                 }}
+                                 onPress={() => {
+                                    setIsOpen2(false);
+                                 }}
+                                 bg={!isOpen2 ? 'teal.500' : 'cyan.500'}
+                              >
+                                 Scanned
+                              </Button>
+                           </VStack>
+                           <VStack>
+                              <Badge
+                                 colorScheme="danger"
+                                 rounded="full"
+                                 mb={-4}
+                                 mr={-4}
+                                 zIndex={1}
+                                 variant="solid"
+                                 alignSelf="flex-end"
+                                 _text={{
+                                    fontSize: 12,
+                                 }}
+                              >
+                                 {estateUnscanned ? estateUnscanned.length : 0}
+                              </Badge>
+                              <Button
+                                 mx={{
+                                    base: 'auto',
+                                    md: 0,
+                                 }}
+                                 p="2"
+                                 bg={isOpen2 ? 'teal.500' : 'cyan.500'}
+                                 _text={{
+                                    fontSize: 12,
+                                 }}
+                                 onPress={() => {
+                                    setIsOpen2(!isOpen2);
+                                 }}
+                              >
+                                 Unscanned
+                              </Button>
+                           </VStack>
+                        </Flex>
+                        {!isOpen2 && dataScanned && dataScanned.length !== 0 ? (
                            <Flex direction="row" justifyContent="space-between">
+                              <Button onPress={() => setVisible(true)}>
+                                 Filters
+                              </Button>
                               <Menu
                                  visible={visible}
-                                 anchor={
-                                    <Button onPress={() => setVisible(true)}>
-                                       Filters
-                                    </Button>
-                                 }
                                  onRequestClose={() => setVisible(false)}
                               >
                                  <MenuItem
@@ -489,7 +537,69 @@ const EstateCreateScreen = () => {
                                     );
                                  })}
                               </Menu>
-                              <Button ml={2} onPress={checkExport}>
+                              <Button
+                                 bg={'cyan.500'}
+                                 ml={2}
+                                 onPress={checkExport}
+                              >
+                                 Export
+                              </Button>
+                           </Flex>
+                        ) : (
+                           <Flex direction="row" justifyContent="space-between">
+                              <Button
+                                 bg={'cyan.500'}
+                                 onPress={() => setVisibleDataUnScan(true)}
+                              >
+                                 Filters
+                              </Button>
+                              <Menu
+                                 visible={visibleDataUnScan}
+                                 onRequestClose={() =>
+                                    setVisibleDataUnScan(false)
+                                 }
+                              >
+                                 <MenuItem
+                                    onPress={() => {
+                                       setVisibleDataUnScan(false);
+                                       setEstateUnscanned(
+                                          estateUnscannedVirtual
+                                       );
+                                    }}
+                                 >
+                                    All
+                                 </MenuItem>
+                                 <MenuDivider />
+                                 {dataCategoryUnScan.map((item) => {
+                                    return (
+                                       <MenuItem
+                                          key={item._id}
+                                          onPress={() => {
+                                             const filterCatUnScan =
+                                                estateUnscannedVirtual.filter(
+                                                   (item2) => {
+                                                      return (
+                                                         item2.category.name ===
+                                                         item.name
+                                                      );
+                                                   }
+                                                );
+                                             setEstateUnscanned(
+                                                filterCatUnScan
+                                             );
+                                             setVisibleDataUnScan(false);
+                                          }}
+                                       >
+                                          {item.name}
+                                       </MenuItem>
+                                    );
+                                 })}
+                              </Menu>
+                              <Button
+                                 bg={'cyan.500'}
+                                 ml={2}
+                                 onPress={checkExport}
+                              >
                                  Export
                               </Button>
                            </Flex>
@@ -515,242 +625,107 @@ const EstateCreateScreen = () => {
                            </Alert>
                         </Center>
                      )}
-                     <FlatList
-                        nestedScrollEnabled
-                        data={dataScanned}
-                        renderItem={({ item }) => (
-                           <Box
-                              borderBottomWidth="1"
-                              _dark={{
-                                 borderColor: 'gray.600',
-                              }}
-                              borderColor="coolGray.200"
-                           >
-                              <HStack space={3} justifyContent="space-evenly">
-                                 <Center ml={'0.5'}>
-                                    <Feather
-                                       name="check-circle"
-                                       size={25}
-                                       color="#28A745"
-                                    />
-                                 </Center>
-                                 <VStack>
+                     {!isOpen2 ? (
+                        <FlatList
+                           nestedScrollEnabled
+                           data={dataScanned}
+                           renderItem={({ item }) => (
+                              <Box
+                                 borderWidth="1"
+                                 borderColor="coolGray.300"
+                                 shadow="3"
+                                 flex={1}
+                                 bg={'#fff'}
+                                 p="5"
+                                 rounded="8"
+                                 mb={2}
+                                 ml={2}
+                                 mr={2}
+                              >
+                                 <HStack alignItems="center">
                                     <Text
-                                       _dark={{
-                                          color: 'warmGray.50',
-                                       }}
-                                       color="coolGray.600"
-                                       bold
+                                       fontSize="lg"
+                                       color="coolGray.700"
+                                       fontWeight="medium"
                                     >
                                        {item.name}
                                     </Text>
+                                    <Spacer />
+                                    <Text fontSize={16} color="coolGray.800">
+                                       Lần kiểm gần đây
+                                    </Text>
+                                 </HStack>
+                                 <HStack alignItems="center">
                                     <Text
-                                       color="coolGray.600"
-                                       _dark={{
-                                          color: 'warmGray.200',
-                                       }}
-                                       bold
+                                       mt="2"
+                                       fontSize="sm"
+                                       color="coolGray.700"
                                     >
                                        {item.status}
                                     </Text>
-                                 </VStack>
-                                 <Spacer />
-                                 <VStack w={'45%'}>
-                                    <Text
-                                       color="coolGray.600"
-                                       _dark={{
-                                          color: 'warmGray.200',
-                                       }}
-                                       bold
-                                    >
-                                       Ngày tạo:{' '}
-                                       {moment(item.createdAt).format(
-                                          'DD-MM-YYYY'
+                                    <Spacer />
+                                    <Text fontSize={16} color="coolGray.800">
+                                       {moment(item.updatedAt).format(
+                                          'DD/MM/YYYY HH:mm'
                                        )}
                                     </Text>
-                                    {item.updatedAt && (
-                                       <Text
-                                          color="coolGray.600"
-                                          _dark={{
-                                             color: 'warmGray.200',
-                                          }}
-                                          bold
-                                       >
-                                          Lần kiểm gần đây:{' '}
-                                          {moment(item.updatedAt).format(
-                                             'DD-MM-YYYY HH:mm'
-                                          )}
-                                       </Text>
-                                    )}
-                                 </VStack>
-                              </HStack>
-                           </Box>
-                        )}
-                        keyExtractor={(item) => item._id}
-                     />
-                  </Box>
-                  {/* divide */}
-                  <Box height={'50%'} bgColor={'red.100'} pb={100}>
-                     {estateUnscanned && estateUnscanned.length !== 0 && (
-                        <View>
-                           <Flex
-                              direction="row"
-                              justifyContent="space-between"
-                              p={2}
-                           >
-                              <Heading
-                                 size="md"
-                                 color="coolGray.600"
-                                 _dark={{
-                                    color: 'warmGray.200',
-                                 }}
-                                 bold
+                                 </HStack>
+                              </Box>
+                           )}
+                           keyExtractor={(item) => item._id}
+                        />
+                     ) : (
+                        <FlatList
+                           data={estateUnscanned}
+                           nestedScrollEnabled
+                           renderItem={({ item, index }) => (
+                              <Box
+                                 borderWidth="1"
+                                 borderColor="coolGray.300"
+                                 shadow="3"
+                                 flex={1}
+                                 bg={'#fff'}
+                                 p="5"
+                                 rounded="8"
                                  mb={2}
+                                 ml={2}
+                                 mr={2}
                               >
-                                 Chưa quét:{' '}
-                                 {estateUnscanned ? estateUnscanned.length : 0}
-                              </Heading>
-                              {estateUnscanned && estateUnscanned.length !== 0 && (
-                                 <Flex
-                                    direction="row"
-                                    justifyContent="flex-end"
-                                    mr={5}
-                                 >
-                                    <Menu
-                                       visible={visibleDataUnScan}
-                                       anchor={
-                                          <Button
-                                             onPress={() =>
-                                                setVisibleDataUnScan(true)
-                                             }
-                                          >
-                                             Filters
-                                          </Button>
-                                       }
-                                       onRequestClose={() =>
-                                          setVisibleDataUnScan(false)
-                                       }
+                                 <HStack alignItems="center">
+                                    <Text
+                                       fontSize="lg"
+                                       color="coolGray.700"
+                                       fontWeight="medium"
                                     >
-                                       <MenuItem
-                                          onPress={() => {
-                                             setVisibleDataUnScan(false);
-                                             setEstateUnscanned(
-                                                estateUnscannedVirtual
-                                             );
-                                          }}
-                                       >
-                                          All
-                                       </MenuItem>
-                                       <MenuDivider />
-                                       {dataCategoryUnScan.map((item) => {
-                                          return (
-                                             <MenuItem
-                                                key={item._id}
-                                                onPress={() => {
-                                                   const filterCatUnScan =
-                                                      estateUnscannedVirtual.filter(
-                                                         (item2) => {
-                                                            return (
-                                                               item2.category
-                                                                  .name ===
-                                                               item.name
-                                                            );
-                                                         }
-                                                      );
-                                                   setEstateUnscanned(
-                                                      filterCatUnScan
-                                                   );
-                                                   setVisibleDataUnScan(false);
-                                                }}
-                                             >
-                                                {item.name}
-                                             </MenuItem>
-                                          );
-                                       })}
-                                    </Menu>
-                                 </Flex>
-                              )}
-                           </Flex>
-
-                           <FlatList
-                              nestedScrollEnabled
-                              data={estateUnscanned}
-                              renderItem={({ item }) => (
-                                 <Box
-                                    borderBottomWidth="1"
-                                    _dark={{
-                                       borderColor: 'gray.600',
-                                    }}
-                                    borderColor="coolGray.200"
-                                 >
-                                    <HStack
-                                       space={3}
-                                       justifyContent="space-evenly"
+                                       {item.name}
+                                    </Text>
+                                    <Spacer />
+                                    <Text fontSize={16} color="coolGray.800">
+                                       Lần kiểm gần đây
+                                    </Text>
+                                 </HStack>
+                                 <HStack alignItems="center">
+                                    <Text
+                                       mt="2"
+                                       fontSize="sm"
+                                       color="coolGray.700"
                                     >
-                                       <Center ml={'0.5'}>
-                                          <FontAwesome
-                                             name="times-circle"
-                                             size={24}
-                                             color="red"
-                                          />
-                                       </Center>
-                                       <VStack>
-                                          <Text
-                                             _dark={{
-                                                color: 'warmGray.50',
-                                             }}
-                                             color="coolGray.600"
-                                             bold
-                                          >
-                                             {item.name}
-                                          </Text>
-                                          <Text
-                                             color="coolGray.600"
-                                             _dark={{
-                                                color: 'warmGray.200',
-                                             }}
-                                             bold
-                                          >
-                                             {item.status}
-                                          </Text>
-                                       </VStack>
-                                       <Spacer />
-                                       <VStack w={'45%'}>
-                                          <Text
-                                             color="coolGray.600"
-                                             _dark={{
-                                                color: 'warmGray.200',
-                                             }}
-                                             bold
-                                          >
-                                             Ngày tạo:{' '}
-                                             {moment(item.createdAt).format(
-                                                'DD-MM-YYYY'
-                                             )}
-                                          </Text>
-                                          {item.updatedAt && (
-                                             <Text
-                                                color="coolGray.600"
-                                                _dark={{
-                                                   color: 'warmGray.200',
-                                                }}
-                                                bold
-                                             >
-                                                Lần kiểm gần đây:{' '}
-                                                {moment(item.updatedAt).format(
-                                                   'DD-MM-YYYY HH:mm'
-                                                )}
-                                             </Text>
-                                          )}
-                                       </VStack>
-                                    </HStack>
-                                 </Box>
-                              )}
-                              keyExtractor={(item) => item._id}
-                           />
-                        </View>
+                                       {item.status}
+                                    </Text>
+                                    <Spacer />
+                                    <Text fontSize={16} color="coolGray.800">
+                                       {moment(item.updatedAt).format(
+                                          'DD/MM/YYYY HH:mm'
+                                       )}
+                                    </Text>
+                                 </HStack>
+                              </Box>
+                           )}
+                           keyExtractor={(item) => item._id}
+                        />
                      )}
                   </Box>
+                  {/* divide */}
 
                   <View style={styles.centerBtnQR}>
                      <Button
