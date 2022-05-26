@@ -412,10 +412,39 @@ const EstateCreateScreen = () => {
       setScanned(true);
       setData(data);
       (getEstate = async () => {
-         await estateApi.get(`/estates/${data}`).then((res) => {
-            setEstate(res.data.data.estate);
-            setAsync(true);
-         });
+         try {
+            await estateApi.get(`/estates/${data}`).then((res) => {
+               if (res.data.data.estate) {
+                  setEstate(res.data.data.estate);
+                  setAsync(true);
+               } else {
+                  setHasPermission(false);
+                  handleScanAgain();
+                  onClose();
+                  toast.show({
+                     title: 'Scan error',
+                     description:
+                        'QR không đúng định dạng hoặc không tồn tại, vui lòng kiểm tra lại!',
+                     placement: 'top',
+                     status: 'error',
+                     duration: 2000,
+                  });
+               }
+            });
+         } catch (error) {
+            // console.log('🍕 ~ error', error);
+            setHasPermission(false);
+            handleScanAgain();
+            onClose();
+            toast.show({
+               title: 'Scan error',
+               description:
+                  'QR không đúng định dạng hoặc không tồn tại, vui lòng kiểm tra lại!',
+               placement: 'top',
+               status: 'error',
+               duration: 2000,
+            });
+         }
       })();
    };
 
