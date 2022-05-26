@@ -167,7 +167,7 @@ const EstateInventoryScreen = () => {
                                        <Spacer />
                                        <Text fontSize={16} color="coolGray.800">
                                           {moment(item.createdAt).format(
-                                             'DD/MM/YYYY'
+                                             'DD/MM/YYYY HH:mm'
                                           )}
                                        </Text>
                                     </HStack>

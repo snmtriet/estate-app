@@ -151,7 +151,10 @@ const EstateCreateScreen = () => {
                   await AsyncStorage.getItem(
                      'dataUnScanned',
                      async (err, result) => {
-                        console.log('🍕 ~ result', JSON.parse(result));
+                        // console.log(
+                        //    '🍕 ~ result dataUnScanned',
+                        //    JSON.parse(result)
+                        // );
                         let dataScan = await AsyncStorage.getItem(
                            'dataScanned'
                         );
@@ -339,6 +342,7 @@ const EstateCreateScreen = () => {
          });
          await AsyncStorage.getItem('dataScanned')
             .then((data) => {
+               // console.log('🍕 ~ dataScanned', dataScanned);
                if (data) {
                   const parseDataScanned = JSON.parse(data);
                   const key = '_id';
@@ -383,7 +387,7 @@ const EstateCreateScreen = () => {
    }, [render]);
 
    const checkExport = async () => {
-      if (estateUnscanned.length === 0) {
+      if (dataScanned.length > 0 && estateUnscanned.length === 0) {
          exportToExcel();
          setDataScanned([]);
          toast.show({
@@ -429,6 +433,7 @@ const EstateCreateScreen = () => {
       const updateEstateUnscanned = estateUnscanned.filter((item) => {
          return item._id !== checkedItem._id;
       });
+      handleUpdateEstate(updateEstateLost._id, updateEstateLost.status);
       const updateDataScanned = dataScanned.concat(updateEstateLost);
       await AsyncStorage.setItem(
          'dataScanned',
