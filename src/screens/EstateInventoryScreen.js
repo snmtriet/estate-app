@@ -285,6 +285,9 @@ const EstateInventoryScreen = () => {
                                  - Đang sử dụng: {item.statistics.dsd}
                               </Text>
                               <Text mt="2" fontSize="sm" color="coolGray.700">
+                                 - Đã mất : {item.statistics.dm}
+                              </Text>
+                              <Text mt="2" fontSize="sm" color="coolGray.700">
                                  - Hư hỏng xin thanh lý: {item.statistics.hhxtl}
                               </Text>
                               <Text mt="2" fontSize="sm" color="coolGray.700">
@@ -312,7 +315,7 @@ const styles = StyleSheet.create({
       top: 50,
       width: Dimensions.get('window').width,
       height: Dimensions.get('window').height,
-      backgroundColor: '#fff',
+      backgroundColor: '#F2F2F2',
    },
 });
 

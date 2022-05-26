@@ -19,20 +19,22 @@ import {
    Alert,
    Badge,
    FlatList,
+   Checkbox,
+   Icon,
 } from 'native-base';
-
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Context as AuthContext } from '../context/AuthContext';
 import estateApi from '../api/estate';
 import { Menu, MenuItem, MenuDivider } from 'react-native-material-menu';
+
+import { Context as AuthContext } from '../context/AuthContext';
 
 const EstateCreateScreen = () => {
    const [isOpen, setIsOpen] = useState(false);
    const toast = useToast();
    const cancelRef = useRef(null);
-
    const { exportToExcel, state, theme } = useContext(AuthContext);
    const [hasPermission, setHasPermission] = useState(null);
    const [scanned, setScanned] = useState(false);
@@ -45,8 +47,8 @@ const EstateCreateScreen = () => {
    const [loading, setLoading] = useState(true);
    const [loadingBtn, setLoadingBtn] = useState(false);
    const [showErr, setShowErr] = useState(false);
-   const [showSuccess, setShowSuccess] = useState(false);
    const [arrayUniqueByKey, setArrayUniqueByKey] = useState([]);
+   const [showSuccess, setShowSuccess] = useState(false);
    const [dataCategory, setDataCategory] = useState([]);
    const [dataCategoryUnScan, setDataCategoryUnScan] = useState([]);
    const [visible, setVisible] = useState(false);
@@ -55,6 +57,9 @@ const EstateCreateScreen = () => {
    const [estateUnscanned, setEstateUnscanned] = useState([]);
    const [estateUnscannedVirtual, setEstateUnscannedVirtual] = useState([]);
    const [isOpen2, setIsOpen2] = useState(false);
+   const [isOpenLose, setIsOpenLose] = useState(false);
+   const [checkedItem, setCheckedItem] = useState({});
+   const [isLoadingLost, setIsLoadingLost] = useState(false);
 
    useEffect(() => {
       const getData = async () => {
@@ -222,6 +227,7 @@ const EstateCreateScreen = () => {
                      let hhcsc = 0;
                      let hhxtl = 0;
                      let kncsd = 0;
+                     let dm = 0;
                      statusArr.map((statusText) => {
                         switch (statusText) {
                            case 'Đang sử dụng':
@@ -232,6 +238,8 @@ const EstateCreateScreen = () => {
                               return hhxtl++;
                            case 'Không nhu cầu sử dụng':
                               return kncsd++;
+                           case 'Đã mất':
+                              return dm++;
                            default:
                               throw new Error('Invalid status');
                         }
@@ -247,6 +255,7 @@ const EstateCreateScreen = () => {
                                  hhcsc,
                                  hhxtl,
                                  kncsd,
+                                 dm,
                               },
                            },
                            {
@@ -365,6 +374,7 @@ const EstateCreateScreen = () => {
                   setLoading(false);
                   setRender(true);
                }
+               setIsLoadingLost(false);
             })
             .catch((err) => console.log(err));
       };
@@ -404,6 +414,34 @@ const EstateCreateScreen = () => {
          });
       })();
    };
+
+   const handleChangeStatusEstate = (e, item) => {
+      setCheckedItem({ _id: item._id, name: item.name, isLost: e });
+      setIsOpenLose(true);
+   };
+
+   const handlePassEstateLosted = async () => {
+      setIsLoadingLost(true);
+      const findEstateLost = estateUnscanned.find((item) => {
+         return item._id === checkedItem._id;
+      });
+      const updateEstateLost = { ...findEstateLost, status: 'Đã mất' };
+      const updateEstateUnscanned = estateUnscanned.filter((item) => {
+         return item._id !== checkedItem._id;
+      });
+      const updateDataScanned = dataScanned.concat(updateEstateLost);
+      await AsyncStorage.setItem(
+         'dataScanned',
+         JSON.stringify(updateDataScanned)
+      );
+      await AsyncStorage.setItem(
+         'dataUnScanned',
+         JSON.stringify(updateEstateUnscanned)
+      );
+      setRender(!render);
+      setIsOpenLose(false);
+   };
+
    if (hasPermission === null) {
       return <Text>Requesting for camera permission</Text>;
    }
@@ -719,6 +757,100 @@ const EstateCreateScreen = () => {
                                        )}
                                     </Text>
                                  </HStack>
+                                 <Spacer my={2} />
+                                 <HStack alignItems="center">
+                                    <Checkbox
+                                       colorScheme="red"
+                                       value={item._id}
+                                       isChecked={
+                                          checkedItem &&
+                                          checkedItem._id === item._id
+                                             ? checkedItem.isLost
+                                             : false
+                                       }
+                                       size="md"
+                                       onChange={(e) => {
+                                          handleChangeStatusEstate(e, item);
+                                       }}
+                                       icon={
+                                          <Icon
+                                             as={
+                                                <MaterialCommunityIcons name="campfire" />
+                                             }
+                                          />
+                                       }
+                                    >
+                                       <Text color={'red.600'} ml={2}>
+                                          Tài sản này đã mất ?
+                                       </Text>
+                                    </Checkbox>
+                                    <Spacer />
+                                 </HStack>
+                                 <Center>
+                                    <AlertDialog
+                                       leastDestructiveRef={cancelRef}
+                                       isOpen={isOpenLose}
+                                       onClose={() => {
+                                          setCheckedItem({
+                                             ...checkedItem,
+                                             isLost: false,
+                                          });
+                                          setIsOpenLose(false);
+                                       }}
+                                    >
+                                       <AlertDialog.Content>
+                                          <AlertDialog.CloseButton />
+                                          <AlertDialog.Header>
+                                             Xác nhận tài sản đã mất!
+                                          </AlertDialog.Header>
+                                          <AlertDialog.Body>
+                                             {` Bạn có chắc ${checkedItem.name} đã mất ?`}
+                                          </AlertDialog.Body>
+                                          <AlertDialog.Footer>
+                                             <Button.Group space={2}>
+                                                <Button
+                                                   variant="unstyled"
+                                                   colorScheme="coolGray"
+                                                   onPress={() => {
+                                                      setCheckedItem({
+                                                         ...checkedItem,
+                                                         isLost: false,
+                                                      });
+                                                      setIsOpenLose(false);
+                                                   }}
+                                                   ref={cancelRef}
+                                                >
+                                                   Hủy
+                                                </Button>
+                                                {isLoadingLost ? (
+                                                   <Button
+                                                      isLoading={true}
+                                                      _loading={{
+                                                         bg: 'primary.500',
+                                                         _text: {
+                                                            color: 'white',
+                                                         },
+                                                      }}
+                                                      _spinner={{
+                                                         color: 'white',
+                                                      }}
+                                                      isLoadingText="Submiting..."
+                                                   />
+                                                ) : (
+                                                   <Button
+                                                      colorScheme="danger"
+                                                      onPress={
+                                                         handlePassEstateLosted
+                                                      }
+                                                   >
+                                                      Tôi chắc chắn
+                                                   </Button>
+                                                )}
+                                             </Button.Group>
+                                          </AlertDialog.Footer>
+                                       </AlertDialog.Content>
+                                    </AlertDialog>
+                                 </Center>
                               </Box>
                            )}
                            keyExtractor={(item) => item._id}
