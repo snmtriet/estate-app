@@ -454,26 +454,16 @@ const EstateCreateScreen = () => {
    };
 
    const handlePassEstateLosted = async () => {
-      setIsLoadingLost(true);
       const findEstateLost = estateUnscanned.find((item) => {
          return item._id === checkedItem._id;
       });
       const updateEstateLost = { ...findEstateLost, status: 'Đã mất' };
-      const updateEstateUnscanned = estateUnscanned.filter((item) => {
-         return item._id !== checkedItem._id;
-      });
-      handleUpdateEstate(updateEstateLost._id, updateEstateLost.status);
-      const updateDataScanned = dataScanned.concat(updateEstateLost);
-      await AsyncStorage.setItem(
-         'dataScanned',
-         JSON.stringify(updateDataScanned)
+      setIsLoadingLost(true);
+      handleUpdateEstate(updateEstateLost._id, updateEstateLost.status).then(
+         (ren) => {
+            setIsOpenLose(false);
+         }
       );
-      await AsyncStorage.setItem(
-         'dataUnScanned',
-         JSON.stringify(updateEstateUnscanned)
-      );
-      setRender(!render);
-      setIsOpenLose(false);
    };
 
    if (hasPermission === null) {
@@ -484,18 +474,8 @@ const EstateCreateScreen = () => {
          <Flex bg="#F2F2F2" flex={1} direction="row" safeAreaTop="5">
             {loading ? (
                <View style={{ flex: 1 }}>
-                  <Flex direction="row" justifyContent="space-between" p={2}>
-                     <Heading
-                        size="md"
-                        color="coolGray.600"
-                        _dark={{
-                           color: 'warmGray.200',
-                        }}
-                        bold
-                        mb={2}
-                     >
-                        Đã quét: <Spinner color="cyan.500" />
-                     </Heading>
+                  <Flex direction="row" justifyContent="center" p={2}>
+                     <Spinner color="cyan.500" />
                   </Flex>
                </View>
             ) : (
@@ -835,10 +815,22 @@ const EstateCreateScreen = () => {
                                        <AlertDialog.Content>
                                           <AlertDialog.CloseButton />
                                           <AlertDialog.Header>
-                                             Xác nhận tài sản đã mất!
+                                             <Flex direction="row">
+                                                <Text bold>Xác nhận </Text>
+                                                <Text bold color={'red'}>
+                                                   {checkedItem.name}
+                                                </Text>
+                                                <Text bold> đã mất ?</Text>
+                                             </Flex>
                                           </AlertDialog.Header>
                                           <AlertDialog.Body>
-                                             {` Bạn có chắc ${checkedItem.name} đã mất ?`}
+                                             <Flex direction="row">
+                                                <Text>Tài sản </Text>
+                                                <Text bold>
+                                                   {checkedItem.name}
+                                                </Text>
+                                                <Text> đã mất ?</Text>
+                                             </Flex>
                                           </AlertDialog.Body>
                                           <AlertDialog.Footer>
                                              <Button.Group space={2}>
@@ -877,7 +869,7 @@ const EstateCreateScreen = () => {
                                                          handlePassEstateLosted
                                                       }
                                                    >
-                                                      Tôi chắc chắn
+                                                      Tiếp tục
                                                    </Button>
                                                 )}
                                              </Button.Group>
