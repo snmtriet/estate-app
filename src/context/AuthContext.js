@@ -248,7 +248,9 @@ const updateMe =
             type: 'add_success_updateMe',
             payload: 'Change info success',
          });
-         await AsyncStorage.setItem('fullname', fullname);
+         if (fullname) {
+            await AsyncStorage.setItem('fullname', fullname);
+         }
       } catch (error) {
          if (error.response) {
             dispatch({
